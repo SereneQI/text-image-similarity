@@ -2,11 +2,11 @@
 path = {
     # Path to the Ms-CoCo dataset folder (containing annotations and images subfolder)
     # http://cocodataset.org/#home
-    "COCO_ROOT": "/path/to/dataset/coco/annotations/",
+    "COCO_ROOT": "/data/coco/",
 
     # Data set split from "Deep Visual-Semantic Alignments for Generating Image Descriptions"  Karpathy et al.
     # Coco split can be found here https://cs.stanford.edu/people/karpathy/deepimagesent/coco.zip
-    "COCO_RESTVAL_SPLIT": "./data/dataset.json",
+    "COCO_RESTVAL_SPLIT": "./data/coco/dataset.json",
 
     # Word embedding from the paper "Skip-Thought Vectors" Kiros et al.
     # http://www.cs.toronto.edu/~rkiros/models/dictionary.txt
