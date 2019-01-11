@@ -39,7 +39,7 @@ device = torch.device("cuda")
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Evaluate the model on cross modal retrieval task')
-    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate')
+    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate', required=True)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=64)
     parser.add_argument('-tr', "--train", dest="dset", action='store_const', const="train", help="Using training dataset instead of validation", default="val")
     parser.add_argument('-te', "--test", dest="dset", action='store_const', const="test", help="Using test dataset instead of validation", default="val")

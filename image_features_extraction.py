@@ -39,8 +39,8 @@ device = torch.device("cuda")
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Extract embedding representation for images')
-    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate')
-    parser.add_argument("-d", '--data', dest="data_path", help='path to the folder containing the image database')
+    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate', required=True)
+    parser.add_argument("-d", '--data', dest="data_path", help='path to the folder containing the image database', required=True)
     parser.add_argument("-o", '--output', dest="output_path", help='path of the output file', default="./image_embedding")
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=64)
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     for i, imgs in enumerate(dataset_loader, 0):
 
         input_imgs = imgs.to(device)
-
+        print(input_imgs)
         with torch.no_grad():
             output_emb, _ = join_emb(input_imgs, None, None)
 

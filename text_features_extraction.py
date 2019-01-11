@@ -39,10 +39,10 @@ device = torch.device("cuda")
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Extract embedding representation for images')
-    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate', Required=True)
+    parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate', required=True)
     parser.add_argument("-d", '--data', dest="data_path", help='path to the file containing the sentence to embed')
     parser.add_argument("-o", '--output', dest="output_path", help='path of the output file', default="./text_embedding")
-    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=64)
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=1)
 
     args = parser.parse_args()
 
