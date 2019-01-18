@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-n", '--name', default="modelFastText", help='Name of the model')
     parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
-    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=1024)
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=512)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
     parser.add_argument("-lrd", "--learning_rate_decrease", dest="lrd",
                         help="List of epoch where the learning rate is decreased (multiplied by first arg of lrd)", nargs='+', type=float, default=[0.5, 2, 3, 4, 5, 6])
@@ -144,8 +144,8 @@ if __name__ == '__main__':
 
     end = time.time()
     print("Initializing embedding ...", end=" ")
-    if args.r:
-        join_emb = torch.load(args.r)
+    if args.resume:
+        join_emb = torch.load(args.resume)
     else:
         join_emb = joint_embedding(args)
 
@@ -186,14 +186,16 @@ if __name__ == '__main__':
     criterion = HardNegativeContrastiveLoss()
 
     join_emb = join_emb.cuda()
-
+    
+    
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
     lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
 
     best_rec = 0
+    
     for epoch in range(0, args.max_epoch):
         is_best = False
-
+        print("train")
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, epoch, print_freq=args.print_frequency)
         val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
 
@@ -236,7 +238,7 @@ if __name__ == '__main__':
             optimizer.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.img_emb.module.base_layer.parameters()), 'lr': optimizer.param_groups[0]
                                        ['lr'], 'initial_lr': args.lr})
             lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
-
+        print('lr_schedule')
         lr_scheduler.step(epoch)
 
     print('Finished Training')
