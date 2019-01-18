@@ -35,6 +35,8 @@ from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
 from visual_genome import local as vg
 
+import fastText
+
 
 class CocoCaptionsRV(data.Dataset):
 
@@ -57,8 +59,9 @@ class CocoCaptionsRV(data.Dataset):
 
         self.content = [(os.path.join(y["filepath"], y["filename"]), [x["raw"] for x in y["sentences"]]) for y in self.content]
 
-        path_params = os.path.join(word_dict_path, 'utable.npy')
-        self.params = np.load(path_params, encoding='latin1')
+        #path_params = os.path.join(word_dict_path, 'utable.npy')
+        #self.params = np.load(path_params, encoding='latin1')
+        self.embed = fastText.load_model("/data/wiki.en.bin")
         self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
@@ -77,8 +80,8 @@ class CocoCaptionsRV(data.Dataset):
         if self.transform is not None:
             img = self.transform(img)
 
-        target = encode_sentence(target, self.params, self.dico)
-
+        #target = encode_sentence(target, self.params, self.dico)
+        target = encode_sentence(target, self.embed, self.dico)
         return img, target
 
     def __len__(self):
