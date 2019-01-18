@@ -30,6 +30,8 @@ from nltk.tokenize import word_tokenize
 from torch.autograd import Variable
 from torch.nn.utils.rnn import pad_sequence
 
+import fastText
+
 
 class AverageMeter(object):
 
@@ -84,7 +86,7 @@ def encode_sentences(sents, embed, dico):
     sents_list = list()
     for sent in sents:
         sent_tok = preprocess(sent)[0]
-        sent_in = Variable(torch.FloatTensor(1, len(sent_tok), 620))
+        sent_in = Variable(torch.FloatTensor(1, len(sent_tok), 300))
         for i, w in enumerate(sent_tok):
             try:
                 sent_in.data[0, i] = torch.from_numpy(embed[dico[w]])
@@ -101,13 +103,14 @@ def encode_sentence(sent, embed, dico, tokenize=True):
     else:
         sent_tok = sent
 
-    sent_in = torch.FloatTensor(len(sent_tok), 620)
+    sent_in = torch.FloatTensor(len(sent_tok), 300)
 
     for i, w in enumerate(sent_tok):
         try:
-            sent_in[i, :620] = torch.from_numpy(embed[dico[w]])
+            sent_in[i, :300] = torch.from_numpy(embed.get_word_vector(w))
         except KeyError:
-            sent_in[i, :620] = torch.from_numpy(embed[dico["UNK"]])
+            #sent_in[i, :620] = torch.from_numpy(embed[dico["UNK"]])
+            sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
 
     return sent_in
 
