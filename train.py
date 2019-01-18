@@ -36,6 +36,7 @@ from misc.utils import AverageMeter, save_checkpoint, collate_fn_padded, log_epo
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR
+import multiprocessing
 
 
 device = torch.device("cuda")
@@ -51,8 +52,9 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
 
     end = time.time()
     for i, (imgs, caps, lengths) in enumerate(train_loader):
-
-        input_imgs, input_caps = imgs.to(device, non_blocking=True), caps.to(device, non_blocking=True)
+        if i%2 == 1:
+                print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
+        input_imgs, input_caps = imgs.cuda(), caps.cuda()
 
         data_time.update(time.time() - end)
 
@@ -124,9 +126,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
 
-    parser.add_argument("-n", '--name', default="model", help='Name of the model')
-    parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=1000)
-    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=160)
+    parser.add_argument("-n", '--name', default="modelFastText", help='Name of the model')
+    parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=1024)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
     parser.add_argument("-lrd", "--learning_rate_decrease", dest="lrd",
                         help="List of epoch where the learning rate is decreased (multiplied by first arg of lrd)", nargs='+', type=float, default=[0.5, 2, 3, 4, 5, 6])
@@ -134,6 +136,7 @@ if __name__ == '__main__':
     parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
     parser.add_argument('-sru', dest="sru", type=int, default=4)
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
+    parser.add_argument("-r", dest="resume", help="Resume training with model")
 
     args = parser.parse_args()
 
@@ -141,7 +144,10 @@ if __name__ == '__main__':
 
     end = time.time()
     print("Initializing embedding ...", end=" ")
-    join_emb = joint_embedding(args)
+    if args.r:
+        join_emb = torch.load(args.r)
+    else:
+        join_emb = joint_embedding(args)
 
     # Text pipeline frozen at the begining
     for param in join_emb.cap_emb.parameters():
@@ -172,14 +178,14 @@ if __name__ == '__main__':
     coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True,
-                              num_workers=4, collate_fn=collate_fn_padded, pin_memory=True)
+                              num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
-                            num_workers=4, collate_fn=collate_fn_padded, pin_memory=True)
+                            num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
     print("Done in: " + str(time.time() - end) + "s")
 
     criterion = HardNegativeContrastiveLoss()
 
-    join_emb.to(device)
+    join_emb = join_emb.cuda()
 
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
     lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
