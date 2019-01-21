@@ -1,16 +1,14 @@
 # Deep semantic-visual embedding with localization
 
-Training and evalutation code for the paper [Finding beans in burgers: Deep semantic-visual embedding with localization](http://openaccess.thecvf.com/content_cvpr_2018/CameraReady/3272.pdf) 
+This code is a fork from : https://github.com/technicolor-research/dsve-loc by Martin Engilberge.
 
-<img src="./data/fig.jpg" width="800">
+It is inspired by the paper [Finding beans in burgers: Deep semantic-visual embedding with localization](http://openaccess.thecvf.com/content_cvpr_2018/CameraReady/3272.pdf) 
 
-This code allow training of new model, reproduction of experiments, as well as features extraction for both images and texts.
-
-Author and contact: Martin Engilberge
+with modification to use differents langages and fasttext instead of skip-thoughts.
 
 ## Main dependencies
 
-This code is written in python. To use it you will need:
+This code is written in python. All dependencies are in the Dockerfile. It will automatically install:
 
 * Python 3.7
 * Pytorch 1.0
@@ -83,19 +81,6 @@ python text_features_extraction.py -p "path/to/model/model.pth.tar" -d "path/to/
 ```
 
 ## Reference
-
-If you found this code useful, please cite the following paper:
-
-    @inproceedings{engilberge2018finding,
-	  title={Finding beans in burgers: Deep semantic-visual embedding with localization},
-	  author={Engilberge, Martin and Chevallier, Louis and P{\'e}rez, Patrick and Cord, Matthieu},
-	  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
-	  pages={3984--3993},
-	  year={2018}
-	}
-
-## License 
-by downloading this program, you commit to comply with the license as stated in the LICENSE.md file.
 
 
 
