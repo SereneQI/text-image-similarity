@@ -99,7 +99,7 @@ RUN pip install sru
 RUN pip install nltk
 
 #pycocotools for MS COCO
-RUN conda install pycocotools
+RUN conda install -c hcc pycocotools
 
 RUN pip install tensorboardx
 
