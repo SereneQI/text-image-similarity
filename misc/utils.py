@@ -74,7 +74,6 @@ def preprocess(text):
     for s in sents:
         tokens = word_tokenize(s)
         result.append(tokens)
-
     return result
 
 
@@ -123,12 +122,7 @@ def encode_sentence_fasttext(sent, embed, tokenize=True):
     sent_in = torch.FloatTensor(len(sent_tok), 300)
 
     for i, w in enumerate(sent_tok):
-        try:
-            sent_in[i, :300] = torch.from_numpy(embed.get_word_vector(w))
-        except KeyError:
-            #sent_in[i, :620] = torch.from_numpy(embed[dico["UNK"]])
-            sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
-
+        sent_in[i, :300] = torch.from_numpy(embed.get_word_vector(w))
     return sent_in
 
 def save_checkpoint(state, is_best, model_name, epoch):
