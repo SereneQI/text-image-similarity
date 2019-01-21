@@ -64,6 +64,21 @@ class SruEmb(nn.Module):
         return x
 
 
+class GruEmb(nn.Module):
+    def __init__(self, nb_layer, dim_in, dim_out, dropout=0.25):
+        super(SruEmb, self).__init__()
+
+        self.dim_out = dim_out
+        self.rnn = nn.GRU(dim_in, dim_out, num_layers=nb_layer,
+                       dropout=dropout,
+                       batch_first=True)
+
+    def forward(self, input):
+        x, hn = self.rnn(x)
+        return hn
+
+
+
 class img_embedding(nn.Module):
 
     def __init__(self, args):
