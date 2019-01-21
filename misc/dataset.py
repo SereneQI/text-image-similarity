@@ -40,7 +40,7 @@ import fastText
 
 class CocoCaptionsRV(data.Dataset):
 
-    def __init__(self, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], word_dict_path=path["WORD_DICT"], sset="train", transform=None):
+    def __init__(self, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], sset="train", transform=None):
         self.root = os.path.join(root, "images/")
         self.transform = transform
 
@@ -61,8 +61,8 @@ class CocoCaptionsRV(data.Dataset):
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
-        self.embed = fastText.load_model("/data/wiki.en.bin")
-        self.dico = _load_dictionary(word_dict_path)
+        self.embed = fastText.load_model("./data/wiki.en.bin")
+        #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
         idx = index / 5
@@ -81,7 +81,7 @@ class CocoCaptionsRV(data.Dataset):
             img = self.transform(img)
 
         #target = encode_sentence(target, self.params, self.dico)
-        target = encode_sentence_fasttext(target, self.embed, self.dico)
+        target = encode_sentence_fasttext(target, self.embed)
         return img, target
 
     def __len__(self):
