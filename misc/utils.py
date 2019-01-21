@@ -103,6 +103,23 @@ def encode_sentence(sent, embed, dico, tokenize=True):
     else:
         sent_tok = sent
 
+    sent_in = torch.FloatTensor(len(sent_tok), 620)
+
+    for i, w in enumerate(sent_tok):
+        try:
+            sent_in[i, :620] = torch.from_numpy(embed[dico[w]])
+        except KeyError:
+            sent_in[i, :620] = torch.from_numpy(embed[dico["UNK"]])
+            #sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
+
+    return sent_in
+
+def encode_sentence_fasttext(sent, embed, dico, tokenize=True):
+    if tokenize:
+        sent_tok = preprocess(sent)[0]
+    else:
+        sent_tok = sent
+
     sent_in = torch.FloatTensor(len(sent_tok), 300)
 
     for i, w in enumerate(sent_tok):
@@ -113,7 +130,6 @@ def encode_sentence(sent, embed, dico, tokenize=True):
             sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
 
     return sent_in
-
 
 def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
