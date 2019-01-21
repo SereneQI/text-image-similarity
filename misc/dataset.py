@@ -29,7 +29,7 @@ import torch
 import torch.utils.data as data
 
 from misc.config import path
-from misc.utils import encode_sentence, _load_dictionary
+from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext
 from PIL import Image
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
@@ -81,7 +81,7 @@ class CocoCaptionsRV(data.Dataset):
             img = self.transform(img)
 
         #target = encode_sentence(target, self.params, self.dico)
-        target = encode_sentence(target, self.embed, self.dico)
+        target = encode_sentence_fasttext(target, self.embed, self.dico)
         return img, target
 
     def __len__(self):
