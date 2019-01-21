@@ -114,7 +114,7 @@ def encode_sentence(sent, embed, dico, tokenize=True):
 
     return sent_in
 
-def encode_sentence_fasttext(sent, embed, dico, tokenize=True):
+def encode_sentence_fasttext(sent, embed, tokenize=True):
     if tokenize:
         sent_tok = preprocess(sent)[0]
     else:

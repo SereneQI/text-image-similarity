@@ -8,12 +8,6 @@ path = {
     # Coco split can be found here https://cs.stanford.edu/people/karpathy/deepimagesent/coco.zip
     "COCO_RESTVAL_SPLIT": "./data/coco/dataset.json",
 
-    # Word embedding from the paper "Skip-Thought Vectors" Kiros et al.
-    # http://www.cs.toronto.edu/~rkiros/models/dictionary.txt
-    # http://www.cs.toronto.edu/~rkiros/models/utable.npy
-    # Path to folder containing both files above
-    "WORD_DICT": './data',
-
     # Path to the weights of classification model (resnet + weldon pooling) pretrained on imagenet
     # https://cloud.lip6.fr/index.php/s/sEiwuVj7UXWwSjf
     "WELDON_CLASSIF_PRETRAINED": "./data/pretrained_classif_152_2400.pth.tar",

@@ -25,6 +25,13 @@ An environment file for conda is available in the repository (environment.yml).
 
 ## Getting started
 
+The first things you need is the [Ms-CoCo dataset (annotations and images)](http://cocodataset.org/#home).
+
+Download langage package from [fastText](https://s3-us-west-1.amazonaws.com/fasttext-vectors/cc.en.300.bin.gz)
+and to save it in ./data/wiki.en.bin
+
+
+
 You will first need to set the paths to the datasets and word embedding in the file misc/config.py 
 Commentaries in the config file contains links where you can download the data.
 
