@@ -87,7 +87,7 @@ class CocoCaptionsRV(data.Dataset):
     def __len__(self):
         return len(self.content) * 5
 
-
+"""
 class VgCaptions(data.Dataset):
 
     def __init__(self, coco_root=path["COCO_ROOT"], vg_path_ann=path["VG_ANN"], path_vg_img=path["VG_IMAGE"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], word_dict_path=path["WORD_DICT"], image=True, transform=None):
@@ -150,7 +150,9 @@ class VgCaptions(data.Dataset):
         else:
             return len(self.captions)
 
+"""
 
+"""
 class CocoSemantic(data.Dataset):
 
     def __init__(self, coco_root=path["COCO_ROOT"], word_dict_path=path["WORD_DICT"], transform=None):
@@ -210,7 +212,7 @@ class CocoSemantic(data.Dataset):
     def __len__(self):
         return len(self.ids)
 
-
+"""
 class FileDataset(data.Dataset):
 
     def __init__(self, img_dir_paths, imgs=None, transform=None):
@@ -233,7 +235,7 @@ class FileDataset(data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
-
+"""
 class TextDataset(data.Dataset):
 
     def __init__(self, text_path, word_dict_path=path["WORD_DICT"]):
@@ -257,3 +259,5 @@ class TextDataset(data.Dataset):
 
     def __len__(self):
         return len(self.sent_list)
+"""
+

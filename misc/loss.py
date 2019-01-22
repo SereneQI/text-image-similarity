@@ -32,7 +32,6 @@ class ContrastiveLoss(nn.Module):
     def forward(self, imgs, caps):
         scores = torch.mm(imgs, caps.t())
         diag = scores.diag()
-
         cost_s = torch.clamp((self.margin - diag).expand_as(scores) + scores, min=0)
 
         # compare every diagonal score to scores in its row (i.e, all
@@ -55,9 +54,12 @@ class HardNegativeContrastiveLoss(nn.Module):
         self.nmax = nmax
 
     def forward(self, imgs, caps):
+        #print("Imgs : ", imgs.shape)
+        #print("Caps : ", caps.shape)
+        
         scores = torch.mm(imgs, caps.t())
         diag = scores.diag()
-
+        #print(scores.shape)
         # Reducing the score on diagonal so there are not selected as hard negative
         scores = (scores - 2 * torch.diag(scores.diag()))
 

@@ -26,18 +26,18 @@ import torch.nn as nn
 from misc.config import path
 from misc.weldonModel import ResNet_weldon
 from sru import SRU
+import torch.nn.init as weight_init
 
 
 class SruEmb(nn.Module):
     def __init__(self, nb_layer, dim_in, dim_out, dropout=0.25):
         super(SruEmb, self).__init__()
-
         self.dim_out = dim_out
         self.rnn = SRU(dim_in, dim_out, num_layers=nb_layer,
                        dropout=dropout, rnn_dropout=dropout,
                        use_tanh=True, has_skip_term=True,
                        v1=True, rescale=False)
-
+         
     def _select_last(self, x, lengths):
         batch_size = x.size(0)
         mask = x.data.new().resize_as_(x.data).fill_(0)
@@ -46,17 +46,18 @@ class SruEmb(nn.Module):
         x = x.mul(mask)
         x = x.sum(1, keepdim=True).view(batch_size, self.dim_out)
         return x
-
+        
     def _process_lengths(self, input):
         max_length = input.size(1)
         lengths = list(
             max_length - input.data.eq(0).sum(1, keepdim=True).squeeze())
         return lengths
-
+        
     def forward(self, input, lengths=None):
         if lengths is None:
             lengths = self._process_lengths(input)
         x = input.permute(1, 0, 2)
+        print("Shape ", x.shape)
         x, hn = self.rnn(x)
         x = x.permute(1, 0, 2)
         if lengths:
@@ -66,16 +67,14 @@ class SruEmb(nn.Module):
 
 class GruEmb(nn.Module):
     def __init__(self, nb_layer, dim_in, dim_out, dropout=0.25):
-        super(SruEmb, self).__init__()
-
+        super(GruEmb, self).__init__()
         self.dim_out = dim_out
         self.rnn = nn.GRU(dim_in, dim_out, num_layers=nb_layer,
                        dropout=dropout,
                        batch_first=True)
-
     def forward(self, input):
-        x, hn = self.rnn(x)
-        return hn
+        x, hn = self.rnn(input)
+        return hn[-1] #select last hidden (or last output)
 
 
 
@@ -110,6 +109,13 @@ class joint_embedding(nn.Module):
 
         self.img_emb = torch.nn.DataParallel(img_embedding(args))
         self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
+        #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
+        
+        #init state              
+        for name, param in self.cap_emb.named_parameters(): 
+            weight_init.normal(param);
+        
+        
         self.fc = torch.nn.DataParallel(nn.Linear(2400, args.dimemb, bias=True))
         self.dropout = torch.nn.Dropout(p=0.5)
 
@@ -125,6 +131,7 @@ class joint_embedding(nn.Module):
 
         if caps is not None:
             x_caps = self.cap_emb(caps, lengths=lengths)
+            #x_caps = self.cap_emb(caps)
             x_caps = x_caps / torch.norm(x_caps, 2, dim=1, keepdim=True).expand_as(x_caps)
         else:
             x_caps = None
