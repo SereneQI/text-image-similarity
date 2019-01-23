@@ -13,7 +13,7 @@ def exportImagePath(filepath, listDownload, outpath):
                 paths = []
                 for i, line in enumerate(f):
                     if i%2 == 0:
-                        print('%0.2f \%' %(i/3672625.0*100.0), end='\r')
+                        print('%2.2f'% (i/3672625.0*100.0), '\%', end='\r')
                     
                     j = json.loads(line)
                     source = j['_source']
@@ -23,11 +23,11 @@ def exportImagePath(filepath, listDownload, outpath):
                     #idsDescription[j['_id']] = source['description']
                     #idsTitles[j['_id']] = source['title']
                     
-                    fout.write(j['_id'] + ' ' + source['imageLink'] + '\n')
+                    fout.write(j['_id'] + '\t' + source['imageLink'] + '\n')
                     if not source['description'] is None:
-                        fullout.write(j['_id'] +' '+source['description']+'\n')
+                        fullout.write(j['_id'] +'\t'+source['description']+'\n')
                     if not source['title'] is None:
-                        fullout.write(j['_id'] +' '+source['title']+'\n')
+                        fullout.write(j['_id'] +'\t'+source['title']+'\n')
          
      
 

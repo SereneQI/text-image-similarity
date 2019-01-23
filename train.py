@@ -136,7 +136,7 @@ if __name__ == '__main__':
     parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
     parser.add_argument('-sru', dest="sru", type=int, default=4)
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
-    parser.add_argument("-r", dest="resume", help="Resume training with model")
+    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
 
     args = parser.parse_args()
 
@@ -144,10 +144,7 @@ if __name__ == '__main__':
 
     end = time.time()
     print("Initializing embedding ...", end=" ")
-    if args.resume:
-        join_emb = torch.load(args.resume)
-    else:
-        join_emb = joint_embedding(args)
+    join_emb = joint_embedding(args)
 
     # Text pipeline frozen at the begining
     for param in join_emb.cap_emb.parameters():
@@ -174,8 +171,12 @@ if __name__ == '__main__':
     end = time.time()
     print("Loading Data ...", end=" ")
 
-    coco_data_train = CocoCaptionsRV(sset="trainrv", transform=prepro)
-    coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val)
+    if args.dataset == 'coco':
+        coco_data_train = CocoCaptionsRV(sset="trainrv", transform=prepro)
+        coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val)
+    elif args.dataset == 'shopping':
+        coco_data_train = Shopping('/data/shopping/', 'data/shoppingDataset.txt', sset="trainrv", transform=prepro)
+        coco_data_val = CocoCaptionsRV('/data/shopping/', 'data/shoppingDataset.txt',sset="val", transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True,
                               num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
