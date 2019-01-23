@@ -57,7 +57,6 @@ class SruEmb(nn.Module):
         if lengths is None:
             lengths = self._process_lengths(input)
         x = input.permute(1, 0, 2)
-        print("Shape ", x.shape)
         x, hn = self.rnn(x)
         x = x.permute(1, 0, 2)
         if lengths:
