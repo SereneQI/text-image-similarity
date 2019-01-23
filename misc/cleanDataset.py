@@ -8,18 +8,24 @@ def removeImages(r, f, o):
     i = 0
     imList = []
     with open(f) as fin:
-        for line in f:
-            line=f.rstrip()
-            im, _ = line.split('\t')
+        for line in fin:
+            line=line.rstrip()
+            try:
+                im, _ = line.split('\t')
+            except Exception:
+                print("Got exception on line :", line)
+                i += 1
+                continue
             im = im+'.jpg'
             path = os.path.join(r,im)
             if os.path.exists(path):
-                i += 1
                 imList.append(line)
+            else:
+                i+=1
     with open(o, 'w') as fout:
         for line in imList:
             fout.write(line+'\n')
-
+    return i
 
 
 
