@@ -3,6 +3,7 @@
 """
 import argparse
 import os.path
+from PIL import Image
 
 def removeImages(r, f, o):
     i = 0
@@ -19,7 +20,13 @@ def removeImages(r, f, o):
             im = im+'.jpg'
             path = os.path.join(r,im)
             if os.path.exists(path):
-                imList.append(line)
+                try:
+                    Image.open(path)
+                except Exception:
+                    print("Cannot open file :", path)
+                    i += 1
+                else:
+                    imList.append(line)
             else:
                 i+=1
     with open(o, 'w') as fout:

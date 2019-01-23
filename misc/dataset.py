@@ -91,23 +91,23 @@ class CocoCaptionsRV(data.Dataset):
 class Shopping(data.Dataset):
 
     def __init__(self, root_dir, captionFile, sset="train", transform=None):
-        self.root = root
         self.transform = transform
 
-        imList = []
-        capList = []
+        self.imList = []
+        self.capList = []
 
         f = open(captionFile)
         for i, line in enumerate(f):
             line = line.rstrip()
             im, cap = line.split('\t')
-            imList.append(os.path.join(root_dir, im+'.jpg'))
-            capList.append(cap)
+            self.imList.append(os.path.join(root_dir, im+'.jpg'))
+            self.capList.append(cap)
                     
+        separation = len(self.imList)-(len(self.imList)//20)
         if sset == "train":
-            self.imList = self.imList[:len(imList)-(len(imList)/20)]
+            self.imList = self.imList[:separation]
         elif sset == "val": #5 last % used for validation
-            self.imList = [len(imList)-(len(imList)/20):]
+            self.imList = self.imList[separation:]
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
@@ -116,8 +116,8 @@ class Shopping(data.Dataset):
 
     def __getitem__(self, index, raw=False):
 
-        path = self.imList[int(idx)]
-        target = self.capList[int(idx)]
+        path = self.imList[int(index)]
+        target = self.capList[int(index)]
         img = Image.open(path).convert('RGB')
 
         if self.transform is not None:

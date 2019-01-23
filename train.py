@@ -28,7 +28,7 @@ import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from misc.dataset import CocoCaptionsRV
+from misc.dataset import CocoCaptionsRV, Shopping
 from misc.evaluation import eval_recall
 from misc.loss import HardNegativeContrastiveLoss
 from misc.model import joint_embedding
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
 
-    parser.add_argument("-n", '--name', default="GRUFastText", help='Name of the model')
+    parser.add_argument("-n", '--name', default="FastText", help='Name of the model')
     parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=512)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
@@ -175,8 +175,8 @@ if __name__ == '__main__':
         coco_data_train = CocoCaptionsRV(sset="trainrv", transform=prepro)
         coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val)
     elif args.dataset == 'shopping':
-        coco_data_train = Shopping('/data/shopping/', 'data/shoppingDataset.txt', sset="trainrv", transform=prepro)
-        coco_data_val = CocoCaptionsRV('/data/shopping/', 'data/shoppingDataset.txt',sset="val", transform=prepro_val)
+        coco_data_train = Shopping('/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
+        coco_data_val = Shopping('/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True,
                               num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
