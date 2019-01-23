@@ -87,6 +87,52 @@ class CocoCaptionsRV(data.Dataset):
     def __len__(self):
         return len(self.content) * 5
 
+
+class Shopping(data.Dataset):
+
+    def __init__(self, root_dir, captionFile, sset="train", transform=None):
+        self.root = root
+        self.transform = transform
+
+        imList = []
+        capList = []
+
+        f = open(captionFile)
+        for i, line in enumerate(f):
+            line = line.rstrip()
+            im, cap = line.split('\t')
+            imList.append(os.path.join(root_dir, im))
+            capList.append(cap)
+                    
+        if sset == "train":
+            self.imList = self.imList[:len(imList)-len(imList)/20]
+        elif sset == "val":
+            self.imList = [len(imList)-len(imList)/20:]
+
+        #path_params = os.path.join(word_dict_path, 'utable.npy')
+        #self.params = np.load(path_params, encoding='latin1')
+        self.embed = fastText.load_model("./data/wiki.fr.bin")
+        #self.dico = _load_dictionary(word_dict_path)
+
+    def __getitem__(self, index, raw=False):
+
+        path = self.imList[int(idx)]
+        target = self.capList[int(idx)]
+        img = Image.open(path).convert('RGB')
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        #target = encode_sentence(target, self.params, self.dico)
+        target = encode_sentence_fasttext(target, self.embed)
+        return img, target
+
+    def __len__(self):
+        return len(self.imList)
+
+
+
+
 """
 class VgCaptions(data.Dataset):
 
