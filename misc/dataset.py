@@ -101,13 +101,13 @@ class Shopping(data.Dataset):
         for i, line in enumerate(f):
             line = line.rstrip()
             im, cap = line.split('\t')
-            imList.append(os.path.join(root_dir, im))
+            imList.append(os.path.join(root_dir, im+'.jpg'))
             capList.append(cap)
                     
         if sset == "train":
-            self.imList = self.imList[:len(imList)-len(imList)/20]
-        elif sset == "val":
-            self.imList = [len(imList)-len(imList)/20:]
+            self.imList = self.imList[:len(imList)-(len(imList)/20)]
+        elif sset == "val": #5 last % used for validation
+            self.imList = [len(imList)-(len(imList)/20):]
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
