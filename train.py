@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-n", '--name', default="FastText", help='Name of the model')
     parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
-    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=512)
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
     parser.add_argument("-lrd", "--learning_rate_decrease", dest="lrd",
                         help="List of epoch where the learning rate is decreased (multiplied by first arg of lrd)", nargs='+', type=float, default=[0.5, 2, 3, 4, 5, 6])
