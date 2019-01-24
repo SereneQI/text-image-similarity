@@ -107,7 +107,7 @@ class joint_embedding(nn.Module):
         super(joint_embedding, self).__init__()
 
         self.img_emb = torch.nn.DataParallel(img_embedding(args))
-        self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
+        self.cap_emb = torch.nn.DataParallel(SruEmb(args.sru, 300, args.dimemb))
         #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
         
         #init state              
