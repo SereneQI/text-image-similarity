@@ -100,8 +100,9 @@ class Shopping(data.Dataset):
         for i, line in enumerate(f):
             line = line.rstrip()
             im, cap = line.split('\t')
-            self.imList.append(os.path.join(root_dir, im+'.jpg'))
-            self.capList.append(cap)
+            if len(cap.split(' ')) <= 15:
+                self.imList.append(os.path.join(root_dir, im+'.jpg'))
+                self.capList.append(cap)
                     
         separation = len(self.imList)-(len(self.imList)//20)
         if sset == "train":
