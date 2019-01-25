@@ -137,6 +137,8 @@ if __name__ == '__main__':
     parser.add_argument('-sru', dest="sru", type=int, default=4)
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
     parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
+    parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
+    parser.add_argument("-es", des="embed_size", help="Embedding size", default="300") 
 
     args = parser.parse_args()
 
@@ -172,13 +174,13 @@ if __name__ == '__main__':
     print("Loading Data ...", end=" ")
 
     if args.dataset == 'coco':
-        coco_data_train = CocoCaptionsRV(sset="trainrv", transform=prepro)
-        coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val)
+        coco_data_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
+        coco_data_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
     elif args.dataset == 'shopping':
-        coco_data_train = Shopping('/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
-        coco_data_val = Shopping('/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
+        coco_data_train = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
+        coco_data_val = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
 
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True,
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=True,
                               num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
                             num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
@@ -193,7 +195,7 @@ if __name__ == '__main__':
     lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
 
     best_rec = 0
-    
+
     for epoch in range(0, args.max_epoch):
         is_best = False
         print("train")
