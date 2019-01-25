@@ -40,7 +40,7 @@ import fastText
 
 class CocoCaptionsRV(data.Dataset):
 
-    def __init__(self, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], sset="train", transform=None):
+    def __init__(self, args, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], sset="train", transform=None):
         self.root = os.path.join(root, "images/")
         self.transform = transform
 
@@ -61,7 +61,7 @@ class CocoCaptionsRV(data.Dataset):
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
-        self.embed = fastText.load_model("./data/wiki.en.bin")
+        self.embed = fastText.load_model(args.dict)
         #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
@@ -90,7 +90,7 @@ class CocoCaptionsRV(data.Dataset):
 
 class Shopping(data.Dataset):
 
-    def __init__(self, root_dir, captionFile, sset="train", transform=None):
+    def __init__(self, args, root_dir, captionFile, sset="train", transform=None):
         self.transform = transform
 
         self.imList = []
@@ -100,7 +100,7 @@ class Shopping(data.Dataset):
         for i, line in enumerate(f):
             line = line.rstrip()
             im, cap = line.split('\t')
-            if len(cap.split(' ')) <= 15:
+            if 1 < len(cap.split(' ')) <= 15:
                 self.imList.append(os.path.join(root_dir, im+'.jpg'))
                 self.capList.append(cap)
                     
@@ -112,7 +112,7 @@ class Shopping(data.Dataset):
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
-        self.embed = fastText.load_model("./data/wiki.fr.bin")
+        self.embed = fastText.load_model(args.dict)
         #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
