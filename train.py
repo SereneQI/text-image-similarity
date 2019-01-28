@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Process some integers.')
 
-    parser.add_argument("-n", '--name', default="FastText", help='Name of the model')
+    parser.add_argument("-n", '--name', required=True, help='Name of the model')
     parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
     parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
     parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
-    parser.add_argument("-es", des="embed_size", help="Embedding size", default="300") 
+    parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int) 
 
     args = parser.parse_args()
 
