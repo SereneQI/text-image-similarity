@@ -33,7 +33,7 @@ from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fastte
 from PIL import Image
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
-from visual_genome import local as vg
+#from visual_genome import local as vg
 
 import fastText
 
