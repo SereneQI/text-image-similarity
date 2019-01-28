@@ -128,7 +128,8 @@ def encode_sentence_fasttext(sent, embed, tokenize=True):
 def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
         torch.save(state, './weights/best_' + model_name + ".pth.tar")
-
+    else:
+        torch.save(state, './weight/epoch_'+str(epoch)+"pth.tar")
 
 def log_epoch(logger, epoch, train_loss, val_loss, lr, batch_train, batch_val, data_train, data_val, recall):
     logger.add_scalar('Loss/Train', train_loss, epoch)
