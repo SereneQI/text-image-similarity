@@ -138,7 +138,9 @@ if __name__ == '__main__':
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
     parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
     parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
-    parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int) 
+    parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
+    parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
+    parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
 
     args = parser.parse_args()
 
@@ -177,20 +179,24 @@ if __name__ == '__main__':
         coco_data_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
         coco_data_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
     elif args.dataset == 'shopping':
-        coco_data_train = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
-        coco_data_val = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
+        if args.dataset_file == '':
+            coco_data_train = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt', sset="trainrv", transform=prepro)
+            coco_data_val = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt',sset="val", transform=prepro_val)
+        else:
+            coco_data_train = Shopping(args, '/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
+            coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=True,
-                              num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
+                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
-                            num_workers=multiprocessing.cpu_count(), collate_fn=collate_fn_padded, pin_memory=True)
+                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
     print("Done in: " + str(time.time() - end) + "s")
 
     criterion = HardNegativeContrastiveLoss()
 
     join_emb = join_emb.cuda()
-    
-    
+
+
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
     lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
 
@@ -198,8 +204,9 @@ if __name__ == '__main__':
 
     for epoch in range(0, args.max_epoch):
         is_best = False
-        print("train")
+        print("Train")
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, epoch, print_freq=args.print_frequency)
+        print("Validation")
         val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
 
         if(sum(recall[0]) + sum(recall[1]) > best_rec):
