@@ -28,14 +28,20 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-from misc.config import path
-from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext
+#from misc.config import path
+#from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess
+from config import path
+from utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 from PIL import Image
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
+from torchvision import transforms
+import argparse
+import multiprocessing
 #from visual_genome import local as vg
 
 import fastText
+from torch.utils.data import DataLoader
 
 
 class CocoCaptionsRV(data.Dataset):
@@ -88,6 +94,7 @@ class CocoCaptionsRV(data.Dataset):
         return len(self.content) * 5
 
 
+
 class Shopping(data.Dataset):
 
     def __init__(self, args, root_dir, captionFile, sset="train", transform=None):
@@ -100,15 +107,17 @@ class Shopping(data.Dataset):
         for i, line in enumerate(f):
             line = line.rstrip()
             im, cap = line.split('\t')
-            if 1 < len(cap.split(' ')) <= 15:
+            if 1 <= len(cap.split(' ')) <= 20:
                 self.imList.append(os.path.join(root_dir, im+'.jpg'))
                 self.capList.append(cap)
                     
         separation = len(self.imList)-(len(self.imList)//20)
         if sset == "train":
             self.imList = self.imList[:separation]
+            self.capList = self.capList[:separation]
         elif sset == "val": #5 last % used for validation
             self.imList = self.imList[separation:]
+            self.capList = self.capList[separation:]
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
@@ -125,7 +134,7 @@ class Shopping(data.Dataset):
             img = self.transform(img)
 
         #target = encode_sentence(target, self.params, self.dico)
-        target = encode_sentence_fasttext(target, self.embed)
+        target = encode_sentence_fasttext(target, self.embed, False)
         return img, target
 
     def __len__(self):
@@ -308,3 +317,68 @@ class TextDataset(data.Dataset):
         return len(self.sent_list)
 """
 
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process some integers.')
+
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
+    parser.add_argument("-fepoch", dest="fepoch", help="Epoch start finetuning resnet", type=int, default=8)
+    parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
+    parser.add_argument('-sru', dest="sru", type=int, default=4)
+    parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
+    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
+    parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
+    parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
+    parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
+    parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
+    normalize = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+
+    prepro = transforms.Compose([
+        transforms.RandomResizedCrop(256),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        normalize,
+    ])
+
+    prepro_val = transforms.Compose([
+        transforms.Resize((350, 350)),
+        transforms.ToTensor(),
+        normalize,
+    ])
+        
+    args = parser.parse_args()
+    
+    coco_data_train = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
+    coco_data_val = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
+    
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=True,
+                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+    val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
+                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
+    
+    for i, b in enumerate(train_loader):
+        print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
+    
+    for i, b in enumerate(val_loader):
+        print("%2.2f"% (i/len(val_loader)*100), '\%', end='\r')
+           
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
