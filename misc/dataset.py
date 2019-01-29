@@ -28,10 +28,10 @@ import numpy as np
 import torch
 import torch.utils.data as data
 
-#from misc.config import path
-#from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess
-from config import path
-from utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
+from misc.config import path
+from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess
+#from config import path
+#from utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 from PIL import Image
 from pycocotools import mask as maskUtils
 from pycocotools.coco import COCO
@@ -109,7 +109,7 @@ class Shopping(data.Dataset):
             im, cap = line.split('\t')
             if 1 <= len(cap.split(' ')) <= 20:
                 self.imList.append(os.path.join(root_dir, im+'.jpg'))
-                self.capList.append(cap)
+                self.capList.append(cap.split(' '))
                     
         separation = len(self.imList)-(len(self.imList)//20)
         if sset == "train":
@@ -134,7 +134,13 @@ class Shopping(data.Dataset):
             img = self.transform(img)
 
         #target = encode_sentence(target, self.params, self.dico)
-        target = encode_sentence_fasttext(target, self.embed, False)
+        try:
+            target = encode_sentence_fasttext(target, self.embed, False)
+        except Exception:
+            print("Error while encoding sentence :", target)
+            ferror = open('logError', 'w')
+            ferror.write("Error while encoding sentence :"+target)
+            return None, None
         return img, target
 
     def __len__(self):
@@ -352,7 +358,7 @@ if __name__ == '__main__':
     coco_data_train = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
     coco_data_val = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
     
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=True,
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=False, drop_last=True,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
                             num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
