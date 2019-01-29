@@ -186,7 +186,7 @@ if __name__ == '__main__':
             coco_data_train = Shopping(args, '/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
             coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
 
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=True,
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
                             num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
