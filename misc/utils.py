@@ -76,6 +76,9 @@ def preprocess(text):
         result.append(tokens)
     return result
 
+def fr_preprocess(sentence):
+    return word_tokenize(sentence)
+
 
 def flatten(l):
     return [item for sublist in l for item in sublist]
@@ -113,9 +116,12 @@ def encode_sentence(sent, embed, dico, tokenize=True):
 
     return sent_in
 
-def encode_sentence_fasttext(sent, embed, tokenize=True):
+def encode_sentence_fasttext(sent, embed, tokenize=True, french=False):
     if tokenize:
-        sent_tok = preprocess(sent)[0]
+        if french:
+            sent_tok = fr_preprocess(sent)
+        else:
+            sent_tok = preprocess(sent)[0]
     else:
         sent_tok = sent
 
@@ -129,7 +135,7 @@ def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
         torch.save(state, './weights/best_' + model_name + ".pth.tar")
     else:
-        torch.save(state, './weight/epoch_'+str(epoch)+"pth.tar")
+        torch.save(state, './weight/epoch_'+str(epoch)+'_'+model_name+".pth.tar")
 
 def log_epoch(logger, epoch, train_loss, val_loss, lr, batch_train, batch_val, data_train, data_val, recall):
     logger.add_scalar('Loss/Train', train_loss, epoch)
@@ -192,3 +198,44 @@ def load_obj(path):
 def save_obj(obj, path):
     with open(os.path.normpath(path + '.pkl'), 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+        
+def checkDataset(datasetFile):
+    imList = []
+    capList = []
+    with open(datasetFile) as f:
+        for i, line in enumerate(f):
+            cap = line.split('\t')[-1]
+            #imList.append(os.path.join(root_dir, im+'.jpg'))
+            if 1 < len(cap.split(' ')) < 20:
+                capList.append(cap)
+    print("Read :", len(capList), "images and caption")
+    embed = fastText.load_model('data/wiki.fr.bin')
+    ERROR = 0
+    m = 0
+    for cap in capList:
+        ft = encode_sentence_fasttext(cap, embed, True, True)    
+        if len(ft) < 1:
+            print("Small : ", cap)
+            ERROR = 1
+        if len(cap) > m:
+            m = len(cap)
+            mcap = cap
+    return ERROR, m, mcap
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
