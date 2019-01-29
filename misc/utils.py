@@ -116,7 +116,7 @@ def encode_sentence(sent, embed, dico, tokenize=True):
 
     return sent_in
 
-def encode_sentence_fasttext(sent, embed, tokenize=True, french=False):
+def encode_sentence_fasttext(sent, embed, tokenize=True, french=True):
     if tokenize:
         if french:
             sent_tok = fr_preprocess(sent)
