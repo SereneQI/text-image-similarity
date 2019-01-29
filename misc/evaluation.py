@@ -43,7 +43,7 @@ def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):
     if scores is None:
         scores = cosine_sim(imgs_enc[::5, :], caps_enc)
 
-    ranks = np.array([np.nonzero(np.in1d(row, np.arange(x * 5, x * 5 + 5, 1)))[0][0]
+    ranks = np.array([np.nonzero(np.in1d(row, np.arange(x * 1, x * 1 + 1, 1)))[0][0]
                       for x, row in enumerate(np.argsort(scores, axis=1)[:, ::-1])])
 
     medr_caps_search = np.median(ranks)
