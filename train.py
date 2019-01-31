@@ -48,7 +48,7 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     data_time = AverageMeter()
     losses = AverageMeter()
 
-    model.train()
+    model = model.train()
 
     end = time.time()
     for i, (imgs, caps, lengths) in enumerate(train_loader):
@@ -86,7 +86,7 @@ def validate(val_loader, model, criterion, print_freq=1000):
     data_time = AverageMeter()
     losses = AverageMeter()
 
-    model.eval()
+    model = model.eval()
 
     imgs_enc = list()
     caps_enc = list()
@@ -141,24 +141,19 @@ if __name__ == '__main__':
     parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
     parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
     parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
+    parser.add_argument("-r", dest="resume", help="Resume training")
 
     args = parser.parse_args()
 
     logger = SummaryWriter(os.path.join("./logs/", args.name))
-
-    end = time.time()
-    print("Initializing embedding ...", end=" ")
-    join_emb = joint_embedding(args)
-
-    # Text pipeline frozen at the begining
-    for param in join_emb.cap_emb.parameters():
-        param.requires_grad = False
-
+    
+    
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
     prepro = transforms.Compose([
         transforms.RandomResizedCrop(256),
+
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         normalize,
@@ -169,6 +164,47 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         normalize,
     ])
+    
+    
+    
+    end = time.time()
+    print("Initializing network ...", end=" ")
+
+    if args.resume:
+        checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
+        join_emb = joint_embedding(checkpoint['args_dict'])
+        join_emb.load_state_dict(checkpoint["state_dict"])
+        last_epoch = checkpoint["epoch"]
+        
+        optimizer=optim.Adam()
+        optimizer.load_state_dict(checkpoint['optimizer']
+        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        lr_scheduler.step(last_epoch)
+        best_rec = checkpoint['best_rec']
+        
+    else:
+        join_emb = joint_embedding(args)
+        checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
+        join_emb = joint_embedding(checkpoint['args_dict'])
+        join_emb.load_state_dict(checkpoint["state_dict"])
+        last_epoch = checkpoint["epoch"]
+        criterion = HardNegativeContrastiveLoss()
+        optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
+        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        last_epoch = 0
+        best_rec = 0
+        
+    criterion = HardNegativeContrastiveLoss()
+    join_emb = join_emb.cuda()
+    # Text pipeline frozen at the begining
+    for param in join_emb.cap_emb.parameters():
+        param.requires_grad = False
+        
+    #image pipeline frozen at the begining
+    for param in join_emb.img_emb.parameters():
+        param.requires_grad = False
+
+    
 
     print("Done in: " + str(time.time() - end) + "s")
 
@@ -192,17 +228,8 @@ if __name__ == '__main__':
                             num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
     print("Done in: " + str(time.time() - end) + "s")
 
-    criterion = HardNegativeContrastiveLoss()
-
-    join_emb = join_emb.cuda()
-
-
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
-    lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
-
-    best_rec = 0
-
-    for epoch in range(0, args.max_epoch):
+    
+    for epoch in range(last_epoch, args.max_epoch):
         is_best = False
         print("Train")
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, epoch, print_freq=args.print_frequency)
