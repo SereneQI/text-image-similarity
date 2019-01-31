@@ -172,37 +172,81 @@ if __name__ == '__main__':
 
     if args.resume:
         checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
-        join_emb = joint_embedding(checkpoint['args_dict'])
+        join_emb = joint_embedding(checkpoint['args_dict']).cuda()
         join_emb.load_state_dict(checkpoint["state_dict"])
         last_epoch = checkpoint["epoch"]
+        print("Load from epoch :", last_epoch)
+        for param in join_emb.cap_emb.parameters():
+            param.requires_grad = False
         
-        optimizer=optim.Adam()
-        optimizer.load_state_dict(checkpoint['optimizer']
+        
+        optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
+        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        
+        if last_epoch >= 1:
+            for param in join_emb.cap_emb.parameters():
+                param.requires_grad = True
+            optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
+                                           ['lr'], 'initial_lr': args.lr})
+             
+        if last_epoch > args.fepoch:                              
+            finetune = True
+            for param in join_emb.parameters():
+                param.requires_grad = True
+
+            # Keep the first layer of resnet frozen
+            for i in range(0, 6):
+                for param in join_emb.img_emb.module.base_layer[0][i].parameters():
+                    param.requires_grad = False
+
+            optimizer.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.img_emb.module.base_layer.parameters()), 'lr': optimizer.param_groups[0]
+                                       ['lr'], 'initial_lr': args.lr})
+            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+            
+        if last_epoch == 0:
+            for param in join_emb.cap_emb.parameters():
+                param.requires_grad = True
+            optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
+                                       ['lr'], 'initial_lr': args.lr})
+            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+           
+        # Starting the finetuning of the whole model
+        if last_epoch == args.fepoch:
+            print("Sarting finetuning")
+            finetune = True
+            for param in join_emb.parameters():
+                param.requires_grad = True
+
+            # Keep the first layer of resnet frozen
+            for i in range(0, 6):
+                for param in join_emb.img_emb.module.base_layer[0][i].parameters():
+                    param.requires_grad = False
+                                           
+        last_epoch += 1                              
+        optimizer.load_state_dict(checkpoint['optimizer'])
         lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
         lr_scheduler.step(last_epoch)
         best_rec = checkpoint['best_rec']
         
     else:
         join_emb = joint_embedding(args)
-        checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
-        join_emb = joint_embedding(checkpoint['args_dict'])
-        join_emb.load_state_dict(checkpoint["state_dict"])
-        last_epoch = checkpoint["epoch"]
+        
         criterion = HardNegativeContrastiveLoss()
+        
+        for param in join_emb.cap_emb.parameters():
+            param.requires_grad = False
+        
+        #image pipeline frozen at the begining
+        for param in join_emb.img_emb.parameters():
+            param.requires_grad = False
+            
         optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
         lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
         last_epoch = 0
         best_rec = 0
         
-    criterion = HardNegativeContrastiveLoss()
-    join_emb = join_emb.cuda()
-    # Text pipeline frozen at the begining
-    for param in join_emb.cap_emb.parameters():
-        param.requires_grad = False
-        
-    #image pipeline frozen at the begining
-    for param in join_emb.img_emb.parameters():
-        param.requires_grad = False
+    criterion = HardNegativeContrastiveLoss().cuda()
+    
 
     
 
