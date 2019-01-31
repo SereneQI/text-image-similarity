@@ -97,7 +97,7 @@ class CocoCaptionsRV(data.Dataset):
 
 class Shopping(data.Dataset):
 
-    def __init__(self, args, root_dir, captionFile, sset="train", transform=None):
+    def __init__(self, args, root_dir, captionFile, transform, sset="train"):
         self.transform = transform
 
         self.imList = []
@@ -125,22 +125,14 @@ class Shopping(data.Dataset):
         #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
-
         path = self.imList[int(index)]
         target = self.capList[int(index)]
         img = Image.open(path).convert('RGB')
-
-        if self.transform is not None:
-            img = self.transform(img)
-
-        #target = encode_sentence(target, self.params, self.dico)
-        try:
-            target = encode_sentence_fasttext(target, self.embed, False)
-        except Exception:
-            print("Error while encoding sentence :", target)
-            ferror = open('logError', 'w')
-            ferror.write("Error while encoding sentence :"+target)
-            return None, None
+            
+        img = self.transform(img)
+        
+        target = encode_sentence_fasttext(target, self.embed, False)
+        
         return img, target
 
     def __len__(self):
