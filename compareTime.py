@@ -58,7 +58,6 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("-n", '--name', required=True, help='Name of the model')
     parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
