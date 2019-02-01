@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+import sys
 
 import torch
 import torch.optim as optim
@@ -74,6 +75,8 @@ if __name__ == '__main__':
     parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
     parser.add_argument("-r", dest="resume", help="Resume training")
     
+    fout = open("logTime", "w")
+    
     args = parser.parse_args()
     
     normalize = transforms.Normalize(
@@ -91,43 +94,59 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         normalize,
     ])
-    
+    criterion = HardNegativeContrastiveLoss().cuda()
     print("Initializing network...")
     
-    join_emb = joint_embedding(args)
+    join_emb = joint_embedding(args).cuda()
+    
+    
     for param in join_emb.cap_emb.parameters():
         param.requires_grad = False
     
-    for param in join_emb.imb_emb.parameters():
+    for param in join_emb.img_emb.parameters():
         param.requires_grad = False
         
     optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=0.001)
     
-    coco_data_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
+    coco_data_train = CocoCaptionsRV(args, sset="val", transform=prepro)
     
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=False, drop_last=True,
+                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+    
+    eTime = time.time()                
     train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
+    endTime = time.time()
+    
+    fout.write(str(endTime - eTime) +'\t'+str(batch_train))
     print("Time per batch : ", batch_train)
+    print("Epoch in :", endTime - eTime)
     
     for param in join_emb.cap_emb.parameters():
         param.requires_grad = True
     optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
                                        ['lr'], 'initial_lr': args.lr})
-    train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
-    print("Time per batch : ", batch_train)   
-                               
-    for param in join_emb.parameters():
-        param.requires_grad = True
 
-    # Keep the first layer of resnet frozen
-    for i in range(0, 6):
-        for param in join_emb.img_emb.module.base_layer[0][i].parameters():
-            param.requires_grad = False
-
-    optimizer.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.img_emb.module.base_layer.parameters()), 'lr': optimizer.param_groups[0]
-                               ['lr'], 'initial_lr': args.lr})
+    eTime = time.time() 
     train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
-    print("Time per batch : ", batch_train)   
-     
+    endTime = time.time()
+    print("Time per batch : ", batch_train)
+    print("Epoch in :", endTime - eTime)
+    fout.write(str(endTime - eTime) +'\t'+str(batch_train))
+    
+    print("Adding layers of img_emb")
+    
+    for i in range(len(join_emb.img_emb.module.base_layer)):
+        for param in join_emb.img_emb.module.base_layer[i].parameters():
+            param.requires_grad = True
+        optimizer.add_param_group({'params': join_emb.img_emb.module.base_layer[i].parameters()
+                                       , 'lr': optimizer.param_groups[0]
+                                       ['lr'], 'initial_lr': args.lr})
+        eTime = time.time() 
+        train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
+        endTime = time.time()
+        print("Time per batch : ", batch_train)
+        print("Epoch in :", endTime - eTime)
+        fout.write(str(endTime - eTime) +'\t'+str(batch_train))
     
     
 
