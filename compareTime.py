@@ -59,7 +59,7 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=10)
+    parser.add_argument("-pf", dest="print_frequency", help="Number of element processed between print", type=int, default=100)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
     parser.add_argument("-lr", "--learning_rate", dest="lr", help="Initialization of the learning rate", type=float, default=0.001)
     parser.add_argument("-lrd", "--learning_rate_decrease", dest="lrd",
@@ -95,11 +95,16 @@ if __name__ == '__main__':
         normalize,
     ])
     criterion = HardNegativeContrastiveLoss().cuda()
+    
+    coco_data_train = CocoCaptionsRV(args, sset="val", transform=prepro)
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=False, drop_last=True,
+                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+                              
     print("Initializing network...")
     
     join_emb = joint_embedding(args).cuda()
     
-    
+    # Grad false to all network
     for param in join_emb.cap_emb.parameters():
         param.requires_grad = False
     
@@ -108,45 +113,58 @@ if __name__ == '__main__':
         
     optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=0.001)
     
-    coco_data_train = CocoCaptionsRV(args, sset="val", transform=prepro)
     
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=False, drop_last=True,
-                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+    
     
     eTime = time.time()                
     train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
     endTime = time.time()
     
-    fout.write(str(endTime - eTime) +'\t'+str(batch_train))
+    fout.write(str(endTime - eTime) +'\t'+str(batch_train)+"\n")
     print("Time per batch : ", batch_train)
     print("Epoch in :", endTime - eTime)
     
+    #Add RNN training
     for param in join_emb.cap_emb.parameters():
         param.requires_grad = True
-    optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
-                                       ['lr'], 'initial_lr': args.lr})
+    optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=0.001)
 
+    
     eTime = time.time() 
     train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
     endTime = time.time()
     print("Time per batch : ", batch_train)
     print("Epoch in :", endTime - eTime)
-    fout.write(str(endTime - eTime) +'\t'+str(batch_train))
+    fout.write(str(endTime - eTime) +'\t'+str(batch_train)+"\n")
+    
+    
+    #Add Weldon training
+    for param in join_emb.img_emb.module.base_layer[1].parameters():
+        param.requires_grad = True
+    for param in join_emb.img_emb.module.base_layer[2].parameters():
+        param.requires_grad = True
+    optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=0.001)
+
+    
+    eTime = time.time() 
+    train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
+    endTime = time.time()
+    print("Time per batch : ", batch_train)
+    print("Epoch in :", endTime - eTime)
+    fout.write(str(endTime - eTime) +'\t'+str(batch_train)+"\n")
     
     print("Adding layers of img_emb")
-    
-    for i in range(len(join_emb.img_emb.module.base_layer)):
-        for param in join_emb.img_emb.module.base_layer[i].parameters():
+    for i in range(7,-1,-1):
+        for param in join_emb.img_emb.module.base_layer[0][i].parameters():
             param.requires_grad = True
-        optimizer.add_param_group({'params': join_emb.img_emb.module.base_layer[i].parameters()
-                                       , 'lr': optimizer.param_groups[0]
-                                       ['lr'], 'initial_lr': args.lr})
+        optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=0.001)
+        
         eTime = time.time() 
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, 1, print_freq=args.print_frequency)
         endTime = time.time()
         print("Time per batch : ", batch_train)
         print("Epoch in :", endTime - eTime)
-        fout.write(str(endTime - eTime) +'\t'+str(batch_train))
+        fout.write(str(endTime - eTime) +'\t'+str(batch_train)+"\n")
     
     
 

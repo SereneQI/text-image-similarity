@@ -23,6 +23,7 @@ Author: Martin Engilberge
 import argparse
 import os
 import time
+import sys
 
 import torch
 import torch.optim as optim
@@ -175,70 +176,21 @@ if __name__ == '__main__':
         join_emb = joint_embedding(checkpoint['args_dict']).cuda()
         join_emb.load_state_dict(checkpoint["state_dict"])
         last_epoch = checkpoint["epoch"]
+        optimizer = checkpoint["optimizer"]
         print("Load from epoch :", last_epoch)
-        for param in join_emb.cap_emb.parameters():
-            param.requires_grad = False
         
-        
-        optimizer=optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
-        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
-        
-        if last_epoch >= 1:
-            for param in join_emb.cap_emb.parameters():
-                param.requires_grad = True
-            optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
-                                           ['lr'], 'initial_lr': args.lr})
-             
-        if last_epoch > args.fepoch:                              
-            finetune = True
-            for param in join_emb.parameters():
-                param.requires_grad = True
-
-            # Keep the first layer of resnet frozen
-            for i in range(0, 6):
-                for param in join_emb.img_emb.module.base_layer[0][i].parameters():
-                    param.requires_grad = False
-
-            optimizer.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.img_emb.module.base_layer.parameters()), 'lr': optimizer.param_groups[0]
-                                       ['lr'], 'initial_lr': args.lr})
-            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        last_epoch += 1   
             
-        if last_epoch == 0:
-            for param in join_emb.cap_emb.parameters():
-                param.requires_grad = True
-            optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
-                                       ['lr'], 'initial_lr': args.lr})
-            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
-           
-        # Starting the finetuning of the whole model
-        if last_epoch == args.fepoch:
-            print("Sarting finetuning")
-            finetune = True
-            for param in join_emb.parameters():
-                param.requires_grad = True
-
-            # Keep the first layer of resnet frozen
-            for i in range(0, 6):
-                for param in join_emb.img_emb.module.base_layer[0][i].parameters():
-                    param.requires_grad = False
-                                           
-        last_epoch += 1                              
-        optimizer.load_state_dict(checkpoint['optimizer'])
         lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
         lr_scheduler.step(last_epoch)
         best_rec = checkpoint['best_rec']
         
     else:
-        join_emb = joint_embedding(args)
-        
-        criterion = HardNegativeContrastiveLoss()
+        join_emb = joint_embedding(args).cuda()
         
         for param in join_emb.cap_emb.parameters():
             param.requires_grad = False
         
-        #image pipeline frozen at the begining
-        for param in join_emb.img_emb.parameters():
-            param.requires_grad = False
             
         optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
         lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
@@ -289,7 +241,7 @@ if __name__ == '__main__':
             'state_dict': join_emb.state_dict(),
             'best_rec': best_rec,
             'args_dict': args,
-            'optimizer': optimizer.state_dict(),
+            'optimizer': optimizer,
         }
 
         log_epoch(logger, epoch, train_loss, val_loss, optimizer.param_groups[0]
