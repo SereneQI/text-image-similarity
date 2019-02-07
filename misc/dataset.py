@@ -23,6 +23,7 @@ Author: Martin Engilberge
 import json
 import os
 import re
+import io
 
 import numpy as np
 import torch
@@ -42,6 +43,28 @@ import multiprocessing
 
 import fastText
 from torch.utils.data import DataLoader
+
+
+
+
+def _load_vec(emb_path):
+    vectors = []
+    word2id = {}
+    with io.open(emb_path, 'r', encoding='utf-8', newline='\n', errors='ignore') as f:
+        next(f)
+        for i, line in enumerate(f):
+            word, vect = line.rstrip().split(' ', 1)
+            vect = np.fromstring(vect, sep=' ')
+            assert word not in word2id, 'word found twice'
+            vectors.append(vect)
+            word2id[word] = len(word2id)
+    id2word = {v: k for k, v in word2id.items()}
+    embeddings = np.vstack(vectors)
+    return embeddings, id2word, word2id
+
+
+
+
 
 
 class CocoCaptionsRV(data.Dataset):
@@ -67,7 +90,13 @@ class CocoCaptionsRV(data.Dataset):
 
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
-        self.embed = fastText.load_model(args.dict)
+        if args.dict[-3:] == 'vec':
+            print("Using .vec file")
+            self.embed, self.id2word, self.word2id = _load_vec(args.dict)
+        else:
+            print("Using .bin file")
+            self.embed = fastText.load_model(args.dict)
+            self.word2id = None
         #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
@@ -87,7 +116,10 @@ class CocoCaptionsRV(data.Dataset):
             img = self.transform(img)
 
         #target = encode_sentence(target, self.params, self.dico)
-        target = encode_sentence_fasttext(target, self.embed)
+        if self.word2id is None:
+            target = encode_sentence_fasttext(target, self.embed)
+        else:
+            target = encode_sentence(target, self.embed, self.word2id)
         return img, target
 
     def __len__(self):

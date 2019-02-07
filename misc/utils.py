@@ -100,23 +100,27 @@ def encode_sentences(sents, embed, dico):
 
 
 def encode_sentence(sent, embed, dico, tokenize=True):
+    sent = sent.strip().lower()
     if tokenize:
-        sent_tok = preprocess(sent)[0]
+        sent_tok = word_tokenize(sent)
     else:
         sent_tok = sent
-    embed_size = embed.get_dimension()
-    sent_in = torch.FloatTensor(len(sent_tok), embed_size)
+        
+    sent_in = torch.FloatTensor(len(sent_tok), 300)
 
     for i, w in enumerate(sent_tok):
+        w = w.strip()
+        if '-' in w:
+            w = w.split('-')[-1]
         try:
-            sent_in[i, :embed_size] = torch.from_numpy(embed[dico[w]])
+            sent_in[i, :300] = torch.from_numpy(embed[dico[w]])
         except KeyError:
-            sent_in[i, :embed_size] = torch.from_numpy(embed[dico["UNK"]])
+            sent_in[i, :300] = torch.from_numpy(embed[0])
             #sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
 
     return sent_in
 
-def encode_sentence_fasttext(sent, embed, tokenize=True, french=True):
+def encode_sentence_fasttext(sent, embed, tokenize=True, french=False):
     if tokenize:
         if french:
             sent_tok = fr_preprocess(sent)
@@ -131,6 +135,20 @@ def encode_sentence_fasttext(sent, embed, tokenize=True, french=True):
     for i, w in enumerate(sent_tok):
         sent_in[i, :embed_size] = torch.from_numpy(embed.get_word_vector(w))
     return sent_in
+
+
+def encode_sentence_vec(sent, embed, word2id, tokenize=True):
+    if tokenize:
+        sent_tok = preprocess(sent)[0]
+    else:
+        sent_tok = sent
+
+    sent_in = torch.FloatTensor(len(sent_tok), len(embed[0]))
+
+    for i, w in enumerate(sent_tok):
+        sent_in[i, :embed_size] = torch.from_numpy(embed[word2id[w]])
+    return sent_in
+
 
 def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
