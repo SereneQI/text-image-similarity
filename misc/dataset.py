@@ -171,6 +171,62 @@ class Shopping(data.Dataset):
         return len(self.imList)
 
 
+class multi30k(data.Dataset):
+    
+    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", transform=None):
+        self.transform = transform
+        self.imList = []
+        self.rootDir = image_dir
+        self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
+        self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.en.vec')
+        
+        if sset == "train":
+            imFile = os.path.join(split_dir, "train.txt")
+            fr_tok = "train.lc.norm.tok.fr"
+            en_tok = "train.lc.norm.tok.en"
+        elif sset == "val":
+            imFile = os.path.join(split_dir, "val.txt")
+            fr_tok = "val.lc.norm.fr"
+            en_tok = "val.lc.norm.en"
+        else:
+            imFile = os.path.join(split_dir, "test_2016_flickr.txt")
+            fr_tok = "test_2016_flickr.lc.norm.tok.fr"
+            en_tok = "test_2016_flickr.lc.norm.tok.en"
+            
+        
+        for line in open(imFile):
+            imName = line.rstrip()
+            self.imList.append(os.path.join(image_dir,imName))
+        
+        self.capListFr = []
+        self.capListEn = []
+        for line in open(os.path.join(tok_dir, fr_tok)):
+            self.capListFr.append(line.rstrip())
+        
+        for line in open(os.path.join(tok_dir, en_tok)):
+            self.capListEn.append(line.rstrip())
+            
+            
+    def __len__(self):
+        return len(self.capListFr) + len(self.capListEn)
+            
+    def __getitem__(self, index):
+        if index >=len(self.capListFr):
+            index = index - len(self.capListFr)
+            cap = self.capListEn[index]
+            target = encode_sentence(cap, self.engEmb, self.engWordsID)
+        else:
+            cap = self.capListFr[index]
+            target = encode_sentence(cap, self.frEmb, self.frWordsID)
+            
+        im = self.transform(Image.open(self.imList[index]))
+        
+        #return im, cap
+        return cap
+        
+            
+        
+    
 
 
 """
