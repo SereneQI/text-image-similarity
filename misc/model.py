@@ -106,13 +106,13 @@ class joint_embedding(nn.Module):
     def __init__(self, args):
         super(joint_embedding, self).__init__()
 
-        self.img_emb = torch.nn.DataParallel(img_embedding(args))
-        self.cap_emb = torch.nn.DataParallel(SruEmb(args.sru, args.embed_size, args.dimemb))
+        self.img_emb = img_embedding(args)
+        self.cap_emb = SruEmb(args.sru, args.embed_size, args.dimemb)
         #self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
         #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
         
         
-        self.fc = torch.nn.DataParallel(nn.Linear(2400, args.dimemb, bias=True))
+        self.fc = nn.Linear(2400, args.dimemb, bias=True)
         self.dropout = torch.nn.Dropout(p=0.5)
 
     def forward(self, imgs, caps, lengths):

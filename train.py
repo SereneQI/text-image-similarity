@@ -38,6 +38,11 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR
 import multiprocessing
+#import apex
+#from apex import amp
+
+os.environ["CHAINER_DTYPE"] = "float16"
+
 
 
 device = torch.device("cuda")
@@ -45,6 +50,7 @@ device = torch.device("cuda")
 
 
 def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
+    #amp_handle = amp.init()
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -62,7 +68,10 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
         optimizer.zero_grad()
         output_imgs, output_caps = model(input_imgs, input_caps, lengths)
         loss = criterion(output_imgs, output_caps)
-
+        
+        
+        #with amp_handle.scale_loss(loss, optimizer) as scaled_loss:
+        #    scaled_loss.backward()
         loss.backward()
         optimizer.step()
 
@@ -186,20 +195,22 @@ if __name__ == '__main__':
         best_rec = checkpoint['best_rec']
         
     else:
-        join_emb = joint_embedding(args).cuda()
+        join_emb = joint_embedding(args)
+        join_emb = torch.nn.DataParallel(join_emb.cuda())
         
-        for param in join_emb.cap_emb.parameters():
+        for param in join_emb.module.cap_emb.parameters():
             param.requires_grad = False
         
-            
-        optimizer = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
-        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        
+        opti = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
+        #opti = apex.optimizers.FusedAdam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
+        #opti = apex.fp16_utils.FP16_Optimizer(optimizer)
+        lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
         last_epoch = 0
         best_rec = 0
         
     criterion = HardNegativeContrastiveLoss().cuda()
     
-
     
 
     print("Done in: " + str(time.time() - end) + "s")
@@ -221,14 +232,14 @@ if __name__ == '__main__':
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
-                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
+                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=False)
     print("Done in: " + str(time.time() - end) + "s")
 
     
     for epoch in range(last_epoch, args.max_epoch):
         is_best = False
         print("Train")
-        train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, optimizer, epoch, print_freq=args.print_frequency)
+        train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, opti, epoch, print_freq=args.print_frequency)
         print("Validation")
         val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
 
@@ -238,23 +249,23 @@ if __name__ == '__main__':
 
         state = {
             'epoch': epoch,
-            'state_dict': join_emb.state_dict(),
+            'state_dict': join_emb.module.state_dict(),
             'best_rec': best_rec,
             'args_dict': args,
-            'optimizer': optimizer,
+            'optimizer': opti,
         }
 
-        log_epoch(logger, epoch, train_loss, val_loss, optimizer.param_groups[0]
+        log_epoch(logger, epoch, train_loss, val_loss, opti.param_groups[0]
                   ['lr'], batch_train, batch_val, data_train, data_val, recall)
         save_checkpoint(state, is_best, args.name, epoch)
 
         # Optimizing the text pipeline after one epoch
         if epoch == 1:
-            for param in join_emb.cap_emb.parameters():
+            for param in join_emb.module.cap_emb.parameters():
                 param.requires_grad = True
-            optimizer.add_param_group({'params': join_emb.cap_emb.parameters(), 'lr': optimizer.param_groups[0]
+            opti.add_param_group({'params': join_emb.module.cap_emb.parameters(), 'lr': opti.param_groups[0]
                                        ['lr'], 'initial_lr': args.lr})
-            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+            lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
 
         # Starting the finetuning of the whole model
         if epoch == args.fepoch:
@@ -265,12 +276,12 @@ if __name__ == '__main__':
 
             # Keep the first layer of resnet frozen
             for i in range(0, 6):
-                for param in join_emb.img_emb.module.base_layer[0][i].parameters():
+                for param in join_emb.module.img_emb.base_layer[0][i].parameters():
                     param.requires_grad = False
 
-            optimizer.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.img_emb.module.base_layer.parameters()), 'lr': optimizer.param_groups[0]
+            opti.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.module.img_emb.base_layer.parameters()), 'lr': opti.param_groups[0]
                                        ['lr'], 'initial_lr': args.lr})
-            lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+            lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
         print('lr_schedule')
         lr_scheduler.step(epoch)
 
