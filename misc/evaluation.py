@@ -26,17 +26,34 @@ from misc.utils import flatten
 
 
 def cosine_sim(A, B):
+    """
+        Return similarity of each image with each caption
+        One line of the output matrix correspond to one image
+        Each row correspond to one caption
+    """
     img_norm = np.linalg.norm(A, axis=1)
     caps_norm = np.linalg.norm(B, axis=1)
-
     scores = np.dot(A, B.T)
-
-    norms = np.dot(np.expand_dims(img_norm, 1),
-                   np.expand_dims(caps_norm.T, 1).T)
-
+    norms = np.dot(np.expand_dims(img_norm, 1),np.expand_dims(caps_norm.T, 1).T)
     scores = (scores / norms)
-
     return scores
+
+
+def k_recall(imgs, caps, ks=[1,5,10]):
+    scores = -cosine_sim(imgs, caps)
+    ranks = np.argsort(scores)
+    
+    recall_img = np.array([0] * len(ks))
+    for i, line in enumerate(ranks):        
+        for e, k in enumerate(ks):
+            for j in range(k):
+                if line[j] == i:
+                    recall_img[e] += 1
+    return recall_img / ranks.shape[0]*100 
+    
+    
+    
+
 
 
 def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):

@@ -171,7 +171,7 @@ class Shopping(data.Dataset):
         return len(self.imList)
 
 
-class multi30k(data.Dataset):
+class Multi30k(data.Dataset):
     
     def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", transform=None):
         self.transform = transform
@@ -186,8 +186,8 @@ class multi30k(data.Dataset):
             en_tok = "train.lc.norm.tok.en"
         elif sset == "val":
             imFile = os.path.join(split_dir, "val.txt")
-            fr_tok = "val.lc.norm.fr"
-            en_tok = "val.lc.norm.en"
+            fr_tok = "val.lc.norm.tok.fr"
+            en_tok = "val.lc.norm.tok.en"
         else:
             imFile = os.path.join(split_dir, "test_2016_flickr.txt")
             fr_tok = "test_2016_flickr.lc.norm.tok.fr"
@@ -214,15 +214,15 @@ class multi30k(data.Dataset):
         if index >=len(self.capListFr):
             index = index - len(self.capListFr)
             cap = self.capListEn[index]
-            target = encode_sentence(cap, self.engEmb, self.engWordsID)
+            target = encode_sentence(cap, self.engEmb, self.engWordsID, tokenize=False)
         else:
             cap = self.capListFr[index]
-            target = encode_sentence(cap, self.frEmb, self.frWordsID)
+            target = encode_sentence(cap, self.frEmb, self.frWordsID, tokenize=False)
             
         im = self.transform(Image.open(self.imList[index]))
         
-        #return im, cap
-        return cap
+        return im, target
+        #return cap
         
             
         

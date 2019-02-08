@@ -29,7 +29,7 @@ import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from misc.dataset import CocoCaptionsRV, Shopping
+from misc.dataset import CocoCaptionsRV, Shopping, Multi30k
 from misc.evaluation import eval_recall
 from misc.loss import HardNegativeContrastiveLoss
 from misc.model import joint_embedding
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
     parser.add_argument('-sru', dest="sru", type=int, default=4)
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
-    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
+    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco, shopping or multi30k", default='coco')
     parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
     parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
     parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
@@ -228,6 +228,10 @@ if __name__ == '__main__':
         else:
             coco_data_train = Shopping(args, '/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
             coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
+    elif args.dataset == "multi30k":
+        print("multi30k dataset")
+        coco_data_train = Multi30k(sset="train", transform=prepro)
+        coco_data_val = Multi30k(sset="val", transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
