@@ -49,9 +49,13 @@ if __name__ == '__main__':
     print("Loading model from:", args.model_path)
     checkpoint = torch.load(args.model_path, map_location=lambda storage, loc: storage)
 
+    # Loading model
     join_emb = joint_embedding(checkpoint['args_dict'])
     join_emb.load_state_dict(checkpoint["state_dict"])
 
+    #Add dataparallel
+    join_emb = torch.nn.DataParallel(join_emb)
+    
     for param in join_emb.parameters():
         param.requires_grad = False
 
