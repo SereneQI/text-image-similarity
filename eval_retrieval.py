@@ -26,8 +26,8 @@ import time
 import torch
 import torchvision.transforms as transforms
 
-from misc.dataset import CocoCaptionsRV
-from misc.evaluation import eval_recall
+from misc.dataset import CocoCaptionsRV, Multi30k
+from misc.evaluation import eval_recall, k_recall
 from misc.model import joint_embedding
 from misc.utils import collate_fn_padded
 from torch.utils.data import DataLoader
@@ -41,16 +41,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Evaluate the model on cross modal retrieval task')
     parser.add_argument("-p", '--path', dest="model_path", help='Path to the weights of the model to evaluate', required=True)
     parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=64)
-    parser.add_argument('-tr', "--train", dest="dset", action='store_const', const="train", help="Using training dataset instead of validation", default="val")
-    parser.add_argument('-te', "--test", dest="dset", action='store_const', const="test", help="Using test dataset instead of validation", default="val")
+    parser.add_argument('-tr', dest="dset", help="Using training dataset instead of validation", default="val")
+    parser.add_argument('-ds', "--dataset", default="mutli30k", help='Choose between coco, multi30k or shopping')
+    parser.add_argument('-d', '--dict', default="data/wiki.multi.en.vec")
 
     args = parser.parse_args()
 
     print("Loading model from:", args.model_path)
     checkpoint = torch.load(args.model_path, map_location=lambda storage, loc: storage)
 
-    join_emb = joint_embedding(checkpoint['args_dict'])
+    join_emb = joint_embedding(checkpoint['args_dict']).cuda()
     join_emb.load_state_dict(checkpoint["state_dict"])
+    #join_emb = torch.nn.DataParallel(join_emb.cuda())
 
     for param in join_emb.parameters():
         param.requires_grad = False
@@ -67,7 +69,10 @@ if __name__ == '__main__':
         normalize,
     ])
 
-    dataset = CocoCaptionsRV(sset=args.dset, transform=prepro_val)
+    if args.dataset == "coco":
+        dataset = CocoCaptionsRV(args, sset=args.dset, transform=prepro_val)
+    else:
+        dataset = Multi30k(sset=args.dset, transform=prepro_val, lang='en')
 
     print("Dataset size: ", len(dataset))
 
