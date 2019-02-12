@@ -185,7 +185,7 @@ if __name__ == '__main__':
     end = time.time()
     print("Initializing network ...", end=" ")
 
-    if args.resume:
+    if args.resume: # Resume previous learning
         checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
         join_emb = joint_embedding(checkpoint['args_dict']).cuda()
         join_emb.load_state_dict(checkpoint["state_dict"])
@@ -200,18 +200,17 @@ if __name__ == '__main__':
         best_rec = checkpoint['best_rec']
         
     else:
-    
-        #Create new model
-        join_emb = joint_embedding(args)
+        # Create new model
+        if args.pretrained != "False": #load a pre-trained model
+            checkpoint = torch.load(args.pretrained, map_location=lambda storage, loc: storage)
+            join_emb = joint_embedding(checkpoint['args_dict'])
+            join_emb.load_state_dict(checkpoint["state_dict"])
+        else:
+            join_emb = joint_embedding(args)
+            
         join_emb = torch.nn.DataParallel(join_emb.cuda())
         
-        #load a pre-trained model
-        if args.pretrained != "False":
-            checkpoint = torch.load(args.pretrained, map_location=lambda storage, loc: storage)
-            join_emb = joint_embedding(checkpoint['args_dict']).cuda()
-            join_emb.load_state_dict(checkpoint["state_dict"])
-            
-        
+        # Froze text side of the model
         for param in join_emb.module.cap_emb.parameters():
             param.requires_grad = False
         
