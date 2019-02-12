@@ -40,16 +40,25 @@ def cosine_sim(A, B):
 
 
 def k_recall(imgs, caps, ks=[1,5,10]):
+    #print(imgs)
+    imgs = np.vstack(imgs)
+    caps = np.vstack(caps)
+    #imgs = np.vstack(flatten(imgs))
+    #caps = np.vstack(flatten(caps))
     scores = -cosine_sim(imgs, caps)
     ranks = np.argsort(scores)
     
     recall_img = np.array([0] * len(ks))
     for i, line in enumerate(ranks):        
         for e, k in enumerate(ks):
-            for j in range(k):
-                if line[j] == i:
-                    recall_img[e] += 1
-    return recall_img / ranks.shape[0]*100 
+            if k <= len(line):
+                for j in range(k):
+                    if line[j] == i:
+                        recall_img[e] += 1
+
+    #TODO add Caption search
+
+    return (recall_img / imgs.shape[0])*100, [0]*len(ks)
     
     
     
