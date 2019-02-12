@@ -30,7 +30,7 @@ import torch
 import torch.utils.data as data
 
 from misc.config import path
-from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess
+from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 #from config import path
 #from utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 from PIL import Image
@@ -173,55 +173,64 @@ class Shopping(data.Dataset):
 
 class Multi30k(data.Dataset):
     
-    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", transform=None):
+    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en-fr', transform=None):
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
         self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
-        self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.en.vec')
+        self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+        
+        self.captions = []
         
         if sset == "train":
             imFile = os.path.join(split_dir, "train.txt")
-            fr_tok = "train.lc.norm.tok.fr"
-            en_tok = "train.lc.norm.tok.en"
+            if "fr" in lang:
+                for line in open(os.path.join(tok_dir, "train.lc.norm.tok.fr")):
+                    self.captions.append( (line.rstrip(), 'fr') )
+            if "en" in lang:
+                for line in open(os.path.join(tok_dir, "train.lc.norm.tok.en")):
+                    self.captions.append( (line.rstrip(), 'en') )
         elif sset == "val":
             imFile = os.path.join(split_dir, "val.txt")
-            fr_tok = "val.lc.norm.tok.fr"
-            en_tok = "val.lc.norm.tok.en"
+            
+            if "fr" in lang:
+                for line in open(os.path.join(tok_dir, "val.lc.norm.tok.fr")):
+                    self.captions.append( (line.rstrip(), 'fr') )
+            if "en" in lang:
+                for line in open(os.path.join(tok_dir, "val.lc.norm.tok.en")):
+                    self.captions.append( (line.rstrip(), 'en') )
+            
         else:
             imFile = os.path.join(split_dir, "test_2016_flickr.txt")
-            fr_tok = "test_2016_flickr.lc.norm.tok.fr"
-            en_tok = "test_2016_flickr.lc.norm.tok.en"
+            
+            if "fr" in lang:
+                for line in open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.fr")):
+                    self.captions.append( (line.rstrip(), 'fr') )
+            if "en" in lang:
+                for line in open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.en")):
+                    self.captions.append( (line.rstrip(), 'en') )
             
         
         for line in open(imFile):
             imName = line.rstrip()
             self.imList.append(os.path.join(image_dir,imName))
-        
-        self.capListFr = []
-        self.capListEn = []
-        for line in open(os.path.join(tok_dir, fr_tok)):
-            self.capListFr.append(line.rstrip())
-        
-        for line in open(os.path.join(tok_dir, en_tok)):
-            self.capListEn.append(line.rstrip())
             
             
     def __len__(self):
-        return len(self.capListFr) + len(self.capListEn)
+        return len(self.captions)
             
-    def __getitem__(self, index):
-        if index >=len(self.capListFr):
-            index = index - len(self.capListFr)
-            cap = self.capListEn[index]
-            target = encode_sentence(cap, self.engEmb, self.engWordsID, tokenize=False)
+    def __getitem__(self, index):            
+        lang = self.captions[index][1]
+        if lang == 'fr':
+            cap = encode_sentence(self.captions[index][0], self.frEmb, self.frWordsID, tokenize=False)
         else:
-            cap = self.capListFr[index]
-            target = encode_sentence(cap, self.frEmb, self.frWordsID, tokenize=False)
-            
+            cap = encode_sentence(self.captions[index][0], self.engEmb, self.engWordsID, tokenize=False)
+        
+        if len(self.imList) <= index:
+            index = index - len(self.imList)
         im = self.transform(Image.open(self.imList[index]))
         
-        return im, target
+        return im, cap
         #return cap
         
             
@@ -404,19 +413,7 @@ class TextDataset(data.Dataset):
 """
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
-
-    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=400)
-    parser.add_argument("-fepoch", dest="fepoch", help="Epoch start finetuning resnet", type=int, default=8)
-    parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
-    parser.add_argument('-sru', dest="sru", type=int, default=4)
-    parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
-    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco or shopping", default='coco')
-    parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
-    parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
-    parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
-    parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
+def main(batch_size=32, workers=4 ):
     normalize = transforms.Normalize(
             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
@@ -433,22 +430,33 @@ if __name__ == '__main__':
         normalize,
     ])
         
-    args = parser.parse_args()
     
-    coco_data_train = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt', sset="trainrv", transform=prepro)
-    coco_data_val = Shopping(args, '/data/shopping/', 'data/cleanShopping.txt',sset="val", transform=prepro_val)
     
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=False, drop_last=True,
-                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
-    val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
-                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
+    coco_data_train = Multi30k(sset="trainrv", transform=prepro)
+    coco_data_val = Multi30k(sset="val", transform=prepro_val)
+    
+    train_loader = DataLoader(coco_data_train, batch_size=batch_size, shuffle=True, drop_last=False,
+                              num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True)
+    val_loader = DataLoader(coco_data_val, batch_size=batch_size, shuffle=False,
+                            num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
     
     for i, b in enumerate(train_loader):
         print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
     
     for i, b in enumerate(val_loader):
         print("%2.2f"% (i/len(val_loader)*100), '\%', end='\r')
-           
+        
+        
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process some integers.')
+
+    parser.add_argument("-bs", "--batch_size", help="The size of the batches", type=int, default=4)
+    parser.add_argument("-w", dest="workers", help="Nb workers", default=4, type=int)
+
+    args=parser.parse_args()
+
+    main(args.batch_size, args.workers)
     
     
     
