@@ -132,6 +132,7 @@ def validate(val_loader, model, criterion, print_freq=1000, ev="full"):
         recall = k_recall(imgs_enc, caps_enc)
     else:
         recall  = eval_recall(imgs_enc, caps_enc)
+    print(recall)
     return losses.avg, batch_time.avg, data_time.avg, recall
 
 
@@ -263,8 +264,8 @@ if __name__ == '__main__':
 
 
         #Check if is best model
-        if(recall[0] + recall[1] > best_rec):
-            best_rec = recall[0] + recall[1]
+        if(sum(recall[0]) + sum(recall[1]) > best_rec):
+            best_rec = sum(recall[0]) + sum(recall[1])
             is_best = True
                 
         
