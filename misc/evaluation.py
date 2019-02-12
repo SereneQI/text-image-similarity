@@ -96,7 +96,9 @@ def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):
 def avg_recall(imgs_enc, caps_enc):
     """ Compute 5 fold recall on set of 1000 images """
     res = list()
-    if len(imgs_enc) % 5000 == 0:
+    if len(imgs_enc) < 5000:
+        max_iter = len(imgs_enc)
+    elif len(imgs_enc) % 5000 == 0:
         max_iter = len(imgs_enc)
     else:
         max_iter = len(imgs_enc) - 5000
@@ -104,7 +106,7 @@ def avg_recall(imgs_enc, caps_enc):
     for i in range(0, max_iter, 5000):
         imgs = imgs_enc[i:i + 5000]
         caps = caps_enc[i:i + 5000]
-        res.append(recall_at_k_multi_cap(imgs, caps))
+        res.append(k_recall(imgs, caps))
 
     return [np.sum([x[i] for x in res], axis=0) / len(res) for i in range(len(res[0]))]
 

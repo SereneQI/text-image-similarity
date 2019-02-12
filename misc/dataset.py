@@ -190,6 +190,13 @@ class Multi30k(data.Dataset):
             if "en" in lang:
                 for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.en"))):
                     self.captions.append( (line.rstrip(), 'en', i) )
+            if "de" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'de', i) )
+            if "cs" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'cs', i) )
+            
         elif sset == "val":
             imFile = os.path.join(split_dir, "val.txt")
             
@@ -199,6 +206,12 @@ class Multi30k(data.Dataset):
             if "en" in lang:
                 for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.en"))):
                     self.captions.append( (line.rstrip(), 'en', i) )
+            if "de" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'de', i) )
+            if "cs" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'cs', i) )
             
         else:
             imFile = os.path.join(split_dir, "test_2016_flickr.txt")
@@ -209,6 +222,12 @@ class Multi30k(data.Dataset):
             if "en" in lang:
                 for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.en"))):
                     self.captions.append( (line.rstrip(), 'en', i) )
+            if "de" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'de', i) )
+            if "cs" in lang:
+                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.de"))):
+                    self.captions.append( (line.rstrip(), 'cs', i) )
             
         
         for line in open(imFile):

@@ -158,6 +158,8 @@ if __name__ == '__main__':
     parser.add_argument("-r", dest="resume", help="Resume training")
     parser.add_argument("-ev", dest="evaluation", help="Evaluation method, full or single", default="full")
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
+    parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
+    
 
     args = parser.parse_args()
 
@@ -253,6 +255,8 @@ if __name__ == '__main__':
                             num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=False)
     print("Done in: " + str(time.time() - end) + "s")
 
+    print("Validation")
+    val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency, ev=args.evaluation)
     
     # For each epoch
     for epoch in range(last_epoch, args.max_epoch):
