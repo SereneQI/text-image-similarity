@@ -173,7 +173,7 @@ class Shopping(data.Dataset):
 
 class Multi30k(data.Dataset):
     
-    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en-fr', transform=None):
+    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None):
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
@@ -185,30 +185,30 @@ class Multi30k(data.Dataset):
         if sset == "train":
             imFile = os.path.join(split_dir, "train.txt")
             if "fr" in lang:
-                for line in open(os.path.join(tok_dir, "train.lc.norm.tok.fr")):
-                    self.captions.append( (line.rstrip(), 'fr') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.fr"))):
+                    self.captions.append( (line.rstrip(), 'fr', i) )
             if "en" in lang:
-                for line in open(os.path.join(tok_dir, "train.lc.norm.tok.en")):
-                    self.captions.append( (line.rstrip(), 'en') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.en"))):
+                    self.captions.append( (line.rstrip(), 'en', i) )
         elif sset == "val":
             imFile = os.path.join(split_dir, "val.txt")
             
             if "fr" in lang:
-                for line in open(os.path.join(tok_dir, "val.lc.norm.tok.fr")):
-                    self.captions.append( (line.rstrip(), 'fr') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.fr"))):
+                    self.captions.append( (line.rstrip(), 'fr', i) )
             if "en" in lang:
-                for line in open(os.path.join(tok_dir, "val.lc.norm.tok.en")):
-                    self.captions.append( (line.rstrip(), 'en') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.en"))):
+                    self.captions.append( (line.rstrip(), 'en', i) )
             
         else:
             imFile = os.path.join(split_dir, "test_2016_flickr.txt")
             
             if "fr" in lang:
-                for line in open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.fr")):
-                    self.captions.append( (line.rstrip(), 'fr') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.fr"))):
+                    self.captions.append( (line.rstrip(), 'fr', i) )
             if "en" in lang:
-                for line in open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.en")):
-                    self.captions.append( (line.rstrip(), 'en') )
+                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.en"))):
+                    self.captions.append( (line.rstrip(), 'en', i) )
             
         
         for line in open(imFile):
@@ -219,19 +219,17 @@ class Multi30k(data.Dataset):
     def __len__(self):
         return len(self.captions)
             
-    def __getitem__(self, index):            
-        lang = self.captions[index][1]
+    def __getitem__(self, index):    
+        caption, lang, imId = self.captions[index]
         if lang == 'fr':
-            cap = encode_sentence(self.captions[index][0], self.frEmb, self.frWordsID, tokenize=False)
+            cap = encode_sentence(caption, self.frEmb, self.frWordsID, tokenize=False)
         else:
-            cap = encode_sentence(self.captions[index][0], self.engEmb, self.engWordsID, tokenize=False)
+            cap = encode_sentence(caption, self.engEmb, self.engWordsID, tokenize=False)
         
-        if len(self.imList) <= index:
-            index = index - len(self.imList)
-        im = self.transform(Image.open(self.imList[index]))
+        im = self.transform(Image.open(self.imList[imId]))
         
+        #return self.imList[imId], caption
         return im, cap
-        #return cap
         
             
         
@@ -439,6 +437,10 @@ def main(batch_size=32, workers=4 ):
                               num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=batch_size, shuffle=False,
                             num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
+    
+    print(coco_data_train[0])
+    print(coco_data_train[1])
+    print(coco_data_train[50])
     
     for i, b in enumerate(train_loader):
         print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
