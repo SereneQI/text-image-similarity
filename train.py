@@ -29,8 +29,9 @@ import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
 
+
 from misc.dataset import CocoCaptionsRV, Shopping, Multi30k
-from misc.evaluation import eval_recall
+from misc.evaluation import eval_recall, k_recall
 from misc.loss import HardNegativeContrastiveLoss
 from misc.model import joint_embedding
 from misc.utils import AverageMeter, save_checkpoint, collate_fn_padded, log_epoch
@@ -91,7 +92,7 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     return losses.avg, batch_time.avg, data_time.avg
 
 
-def validate(val_loader, model, criterion, print_freq=1000):
+def validate(val_loader, model, criterion, print_freq=1000, ev="full"):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -127,8 +128,10 @@ def validate(val_loader, model, criterion, print_freq=1000):
                       i, len(val_loader), batch_time=batch_time,
                       data_time=data_time, loss=losses))
 
-    recall = eval_recall(imgs_enc, caps_enc)
-    print(recall)
+    if ev == "single":
+        recall = k_recall(imgs_enc, caps_enc)
+    else:
+        recall  = eval_recall(imgs_enc, caps_enc)
     return losses.avg, batch_time.avg, data_time.avg, recall
 
 
@@ -152,6 +155,8 @@ if __name__ == '__main__':
     parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
     parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
     parser.add_argument("-r", dest="resume", help="Resume training")
+    parser.add_argument("-ev", dest="evaluation", help="Evaluation method, full or single", default="full")
+    parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
 
     args = parser.parse_args()
 
@@ -195,8 +200,17 @@ if __name__ == '__main__':
         best_rec = checkpoint['best_rec']
         
     else:
+    
+        #Create new model
         join_emb = joint_embedding(args)
         join_emb = torch.nn.DataParallel(join_emb.cuda())
+        
+        #load a pre-trained model
+        if args.pretrained != "False":
+            checkpoint = torch.load(args.pretrained, map_location=lambda storage, loc: storage)
+            join_emb = joint_embedding(checkpoint['args_dict']).cuda()
+            join_emb.load_state_dict(checkpoint["state_dict"])
+            
         
         for param in join_emb.module.cap_emb.parameters():
             param.requires_grad = False
@@ -230,8 +244,8 @@ if __name__ == '__main__':
             coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
     elif args.dataset == "multi30k":
         print("multi30k dataset")
-        coco_data_train = Multi30k(sset="train", transform=prepro)
-        coco_data_val = Multi30k(sset="val", transform=prepro_val)
+        coco_data_train = Multi30k(sset="train", lang='en', transform=prepro)
+        coco_data_val = Multi30k(sset="val", lang='en', transform=prepro_val)
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
@@ -240,17 +254,21 @@ if __name__ == '__main__':
     print("Done in: " + str(time.time() - end) + "s")
 
     
+    # For each epoch
     for epoch in range(last_epoch, args.max_epoch):
         is_best = False
         print("Train")
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, opti, epoch, print_freq=args.print_frequency)
         print("Validation")
-        val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
+        val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency, ev=args.evaluation)
 
-        if(sum(recall[0]) + sum(recall[1]) > best_rec):
-            best_rec = sum(recall[0]) + sum(recall[1])
+
+        #Check if is best model
+        if(recall[0] + recall[1] > best_rec):
+            best_rec = recall[0] + recall[1]
             is_best = True
-
+                
+        
         state = {
             'epoch': epoch,
             'state_dict': join_emb.module.state_dict(),
@@ -259,6 +277,7 @@ if __name__ == '__main__':
             'optimizer': opti,
         }
 
+        # save state
         log_epoch(logger, epoch, train_loss, val_loss, opti.param_groups[0]
                   ['lr'], batch_train, batch_val, data_train, data_val, recall)
         save_checkpoint(state, is_best, args.name, epoch)
