@@ -49,12 +49,14 @@ def k_recall(imgs, caps, ks=[1,5,10]):
     ranks = np.argsort(scores)
     
     recall_img = np.array([0] * len(ks))
-    for i, line in enumerate(ranks):        
-        for e, k in enumerate(ks):
-            if k <= len(line):
-                for j in range(k):
-                    if line[j] == i:
-                        recall_img[e] += 1
+    for line_nb, line in enumerate(ranks):        
+        for nb_k, k in enumerate(ks):
+            if k <= len(line): # we need at least k value in the line to compute the k-recall
+                if line[line_nb] <= k: # diagonal number is below k
+                    recall_img[nb_k] += 1
+                #for j in range(k):
+                #    if line[j] == i:
+                #        recall_img[e] += 1
 
     #TODO add Caption search
 
@@ -96,9 +98,7 @@ def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):
 def avg_recall(imgs_enc, caps_enc):
     """ Compute 5 fold recall on set of 1000 images """
     res = list()
-    if len(imgs_enc) < 5000:
-        max_iter = len(imgs_enc)
-    elif len(imgs_enc) % 5000 == 0:
+    if len(imgs_enc) < 5000 or len(imgs_enc) % 5000 == 0:
         max_iter = len(imgs_enc)
     else:
         max_iter = len(imgs_enc) - 5000
@@ -106,7 +106,7 @@ def avg_recall(imgs_enc, caps_enc):
     for i in range(0, max_iter, 5000):
         imgs = imgs_enc[i:i + 5000]
         caps = caps_enc[i:i + 5000]
-        res.append(k_recall(imgs, caps))
+        res.append(recall_at_k_multi_cap(imgs, caps))
 
     return [np.sum([x[i] for x in res], axis=0) / len(res) for i in range(len(res[0]))]
 

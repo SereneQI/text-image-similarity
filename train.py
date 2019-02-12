@@ -30,7 +30,7 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 
 
-from misc.dataset import CocoCaptionsRV, Shopping, Multi30k
+from misc.dataset import CocoCaptionsRV, Shopping, Multi30k, DoubleDataset
 from misc.evaluation import eval_recall, k_recall
 from misc.loss import HardNegativeContrastiveLoss
 from misc.model import joint_embedding
@@ -92,7 +92,7 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     return losses.avg, batch_time.avg, data_time.avg
 
 
-def validate(val_loader, model, criterion, print_freq=1000, ev="full"):
+def validate(val_loader, model, criterion, print_freq=1000):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -128,10 +128,7 @@ def validate(val_loader, model, criterion, print_freq=1000, ev="full"):
                       i, len(val_loader), batch_time=batch_time,
                       data_time=data_time, loss=losses))
 
-    if ev == "single":
-        recall = k_recall(imgs_enc, caps_enc)
-    else:
-        recall  = eval_recall(imgs_enc, caps_enc)
+    recall  = eval_recall(imgs_enc, caps_enc)
     print(recall)
     return losses.avg, batch_time.avg, data_time.avg, recall
 
@@ -150,13 +147,12 @@ if __name__ == '__main__':
     parser.add_argument("-mepoch", dest="max_epoch", help="Max epoch", type=int, default=60)
     parser.add_argument('-sru', dest="sru", type=int, default=4)
     parser.add_argument("-de", dest="dimemb", help="Dimension of the joint embedding", type=int, default=2400)
-    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco, shopping or multi30k", default='coco')
+    parser.add_argument("-d", dest="dataset", help="Dataset to choose : coco, shopping, multi30k or double", default='coco')
     parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
     parser.add_argument("-es", dest="embed_size", help="Embedding size", default=300, type=int)
     parser.add_argument("-w", dest="workers", help="Nb workers", default=multiprocessing.cpu_count(), type=int)
     parser.add_argument("-df", dest="dataset_file", help="File with dataset", default="")
     parser.add_argument("-r", dest="resume", help="Resume training")
-    parser.add_argument("-ev", dest="evaluation", help="Evaluation method, full or single", default="full")
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
     parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
     
@@ -248,6 +244,16 @@ if __name__ == '__main__':
         print("multi30k dataset")
         coco_data_train = Multi30k(sset="train", lang='en', transform=prepro)
         coco_data_val = Multi30k(sset="val", lang='en', transform=prepro_val)
+        
+    elif args.dataset == "double":
+        d1_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
+        d2_train = Multi30k(sset="train", lang='en', transform=prepro)
+        d1_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
+        d2_val = Multi30k(sset="val", lang='en', transform=prepro_val)
+        
+        coco_data_train = DoubleDataset(d1_train, d2_train)
+        coco_data_val = DoubleDataset(d1_val, d2_val)
+        
 
     train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
@@ -256,7 +262,7 @@ if __name__ == '__main__':
     print("Done in: " + str(time.time() - end) + "s")
 
     print("Validation")
-    val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency, ev=args.evaluation)
+    val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
     
     # For each epoch
     for epoch in range(last_epoch, args.max_epoch):
@@ -264,7 +270,7 @@ if __name__ == '__main__':
         print("Train")
         train_loss, batch_train, data_train = train(train_loader, join_emb, criterion, opti, epoch, print_freq=args.print_frequency)
         print("Validation")
-        val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency, ev=args.evaluation)
+        val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
 
 
         #Check if is best model
