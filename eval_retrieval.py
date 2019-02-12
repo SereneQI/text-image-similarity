@@ -44,6 +44,7 @@ if __name__ == '__main__':
     parser.add_argument('-tr', dest="dset", help="Using training dataset instead of validation", default="val")
     parser.add_argument('-ds', "--dataset", default="mutli30k", help='Choose between coco, multi30k or shopping')
     parser.add_argument('-d', '--dict', default="data/wiki.multi.en.vec")
+    parser.add_argument("-la", "--lang", default="en")
 
     args = parser.parse_args()
 
@@ -72,11 +73,11 @@ if __name__ == '__main__':
     if args.dataset == "coco":
         dataset = CocoCaptionsRV(args, sset=args.dset, transform=prepro_val)
     else:
-        dataset = Multi30k(sset=args.dset, transform=prepro_val, lang='en')
+        dataset = Multi30k(sset=args.dset, transform=prepro_val, lang=args.lang)
 
     print("Dataset size: ", len(dataset))
 
-    dataset_loader = DataLoader(dataset, batch_size=args.batch_size,
+    dataset_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False,
                                 num_workers=6, collate_fn=collate_fn_padded, pin_memory=True)
 
     imgs_enc = list()
