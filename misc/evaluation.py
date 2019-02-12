@@ -58,7 +58,7 @@ def k_recall(imgs, caps, ks=[1,5,10]):
 
     #TODO add Caption search
 
-    return (recall_img / imgs.shape[0])*100, [0]*len(ks)
+    return (recall_img / imgs.shape[0])*100, [0]*len(ks), np.median(ranks), 0
     
     
     
