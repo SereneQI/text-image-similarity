@@ -9,6 +9,7 @@ import torch.utils.data as data
 
 from misc.config import path
 from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
+from misc.model import joint_embedding
 #from config import path
 #from utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 from PIL import Image
@@ -160,7 +161,7 @@ class Multi30k(data.Dataset):
         
         self.captions = []
         
-        if sset == "train":
+        if "train" in sset:
             imFile = os.path.join(split_dir, "train.txt")
             if "fr" in lang:
                 for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.fr"))):
@@ -175,7 +176,7 @@ class Multi30k(data.Dataset):
                 for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.de"))):
                     self.captions.append( (line.rstrip(), 'cs', i) )
             
-        elif sset == "val":
+        elif "val" in sset:
             imFile = os.path.join(split_dir, "val.txt")
             
             if "fr" in lang:
@@ -225,6 +226,7 @@ class Multi30k(data.Dataset):
         
         im = self.transform(Image.open(self.imList[imId]))
         
+        #return caption, cap
         #return self.imList[imId], caption
         return im, cap
         
@@ -406,19 +408,44 @@ def main(batch_size=32, workers=4 ):
     coco_data_train = Multi30k(sset="trainrv", transform=prepro)
     coco_data_val = Multi30k(sset="val", transform=prepro_val)
     
-    train_loader = DataLoader(coco_data_train, batch_size=batch_size, shuffle=True, drop_last=False,
+    train_loader = DataLoader(coco_data_train, batch_size=1, shuffle=True, drop_last=False,
                               num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True)
     val_loader = DataLoader(coco_data_val, batch_size=batch_size, shuffle=False,
                             num_workers=workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=True)
     
-    print(coco_data_train[0])
-    print(coco_data_train[1])
-    print(coco_data_train[50])
+    
+    print(coco_data_train[0][0])
+    print(coco_data_train[0][1].shape)
     
     for i, b in enumerate(train_loader):
+        print(b[1].shape)
+        sys.exit(0)
+        if np.isnan(b[0]).any():
+                print("------------------")
+                print("NaN found in image")
+                print("------------------")
+        if np.isnan(b[1]).any():
+                print("------------------")
+                print("NaN found in caption")
+                print("------------------")
+        print(b[1].shape)
+        if b[1].sum() == 0:
+            __import__('ipdb');ipdb.set_trace()
+            
+            print("Found caption at 0")
+            print("cap :", coco_data_train[i])
+                
         print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
     
     for i, b in enumerate(val_loader):
+        if np.isnan(b[0]).any():
+                print("------------------")
+                print("NaN found in image")
+                print("------------------")
+        if np.isnan(b[1]).any():
+                print("------------------")
+                print("NaN found in caption")
+                print("------------------")
         print("%2.2f"% (i/len(val_loader)*100), '\%', end='\r')
         
         
