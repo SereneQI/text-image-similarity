@@ -104,7 +104,7 @@ def encode_sentence(sent, embed, dico, tokenize=True):
     if tokenize:
         sent_tok = word_tokenize(sent)
     else:
-        sent_tok = sent
+        sent_tok = sent.split(' ')
         
     sent_in = torch.FloatTensor(len(sent_tok), 300)
 

@@ -22,6 +22,7 @@ Author: Martin Engilberge
 
 import torch.nn as nn
 import torch
+import numpy as np
 
 
 class ContrastiveLoss(nn.Module):
@@ -75,5 +76,4 @@ class HardNegativeContrastiveLoss(nn.Module):
         neg_img = torch.sum(torch.clamp(max_i + (self.margin - diag).view(-1, 1).expand_as(max_i), min=0))
 
         loss = neg_cap + neg_img
-
         return loss

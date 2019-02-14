@@ -28,6 +28,7 @@ import sys
 import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
+import numpy as np
 
 
 from misc.dataset import CocoCaptionsRV, Shopping, Multi30k, DoubleDataset
@@ -63,18 +64,42 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
         if i%2 == 1:
                 print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
         input_imgs, input_caps = imgs.cuda(), caps.cuda()
+        
+        if (input_imgs != input_imgs).any():
+            print("NaN found in input_imgs")
+            sys.exit(0)
+        if (input_caps != input_caps).any():
+            print("NaN found in input_caps")
+            sys.exit(0)
+        
 
         data_time.update(time.time() - end)
 
         optimizer.zero_grad()
         output_imgs, output_caps = model(input_imgs, input_caps, lengths)
+        
+        if (output_imgs != output_imgs).any():
+            print("NaN found in output image")
+            sys.exit(0)
+        if (output_caps != output_caps).any():
+            print("NaN found in output caption")
+            sys.exit(0)
+        
+        
         loss = criterion(output_imgs, output_caps)
+        
+        if (loss != loss).any():
+            print(input_caps[-1])
+            print(output_caps[-1])
+            print(loss[1])
         
         
         #with amp_handle.scale_loss(loss, optimizer) as scaled_loss:
         #    scaled_loss.backward()
         loss.backward()
         optimizer.step()
+        
+        
 
         losses.update(loss.item(), imgs.size(0))
 
@@ -255,14 +280,14 @@ if __name__ == '__main__':
         coco_data_val = DoubleDataset(d1_val, d2_val)
         
 
-    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
+    train_loader = DataLoader(coco_data_train, batch_size=args.batch_size*3, shuffle=True, drop_last=False,
                               num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
-    val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
+    val_loader = DataLoader(coco_data_val, batch_size=args.batch_size*3, shuffle=False,
                             num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=False)
     print("Done in: " + str(time.time() - end) + "s")
 
-    print("Validation")
-    val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
+    #print("Validation")
+    #val_loss, batch_val, data_val, recall = validate(val_loader, join_emb, criterion, print_freq=args.print_frequency)
     
     # For each epoch
     for epoch in range(last_epoch, args.max_epoch):
@@ -294,6 +319,11 @@ if __name__ == '__main__':
 
         # Optimizing the text pipeline after one epoch
         if epoch == 1:
+            train_loader = DataLoader(coco_data_train, batch_size=args.batch_size*2, shuffle=True, drop_last=False,
+                                  num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+            val_loader = DataLoader(coco_data_val, batch_size=args.batch_size*2, shuffle=False,
+                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=False)
+                            
             for param in join_emb.module.cap_emb.parameters():
                 param.requires_grad = True
             opti.add_param_group({'params': join_emb.module.cap_emb.parameters(), 'lr': opti.param_groups[0]
@@ -303,6 +333,12 @@ if __name__ == '__main__':
         # Starting the finetuning of the whole model
         if epoch == args.fepoch:
             print("Sarting finetuning")
+            
+            train_loader = DataLoader(coco_data_train, batch_size=args.batch_size, shuffle=True, drop_last=False,
+                              num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True)
+            val_loader = DataLoader(coco_data_val, batch_size=args.batch_size, shuffle=False,
+                            num_workers=args.workers, collate_fn=collate_fn_padded, pin_memory=True, drop_last=False)
+            
             finetune = True
             for param in join_emb.parameters():
                 param.requires_grad = True
