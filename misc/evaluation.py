@@ -46,21 +46,15 @@ def k_recall(imgs, caps, ks=[1,5,10]):
     #imgs = np.vstack(flatten(imgs))
     #caps = np.vstack(flatten(caps))
     scores = -cosine_sim(imgs, caps)
-    ranks = np.argsort(scores)
+    ranks = np.argsort(np.argsort(scores))
     
-    recall_img = np.array([0] * len(ks))
-    for line_nb, line in enumerate(ranks):        
-        for nb_k, k in enumerate(ks):
-            if k <= len(line): # we need at least k value in the line to compute the k-recall
-                if line[line_nb] <= k: # diagonal number is below k
-                    recall_img[nb_k] += 1
-                #for j in range(k):
-                #    if line[j] == i:
-                #        recall_img[e] += 1
+    recall_img = np.array([ np.count_nonzero(np.diag(ranks) < k) for k in ks ])
+    
+    ranks_caps = np.argsort(np.argsort(np.transpose(scores)))
+    
+    recall_cap = np.array([ np.count_nonzero(np.diag(ranks_caps) < k) for k in ks ])
 
-    #TODO add Caption search
-
-    return (recall_img / imgs.shape[0])*100, [0]*len(ks), np.median(ranks), 0
+    return (recall_img / imgs.shape[0])*100, recall_cap / caps.shape[0]*100, np.median(ranks), np.median(ranks_caps)
     
     
     
@@ -98,15 +92,15 @@ def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):
 def avg_recall(imgs_enc, caps_enc):
     """ Compute 5 fold recall on set of 1000 images """
     res = list()
-    if len(imgs_enc) < 5000 or len(imgs_enc) % 5000 == 0:
+    if len(imgs_enc) < 1000 or len(imgs_enc) % 1000 == 0:
         max_iter = len(imgs_enc)
     else:
-        max_iter = len(imgs_enc) - 5000
+        max_iter = len(imgs_enc) - 1000
 
-    for i in range(0, max_iter, 5000):
-        imgs = imgs_enc[i:i + 5000]
-        caps = caps_enc[i:i + 5000]
-        res.append(recall_at_k_multi_cap(imgs, caps))
+    for i in range(0, max_iter, 1000):
+        imgs = imgs_enc[i:i + 1000]
+        caps = caps_enc[i:i + 1000]
+        res.append(k_recall(imgs, caps))
 
     return [np.sum([x[i] for x in res], axis=0) / len(res) for i in range(len(res[0]))]
 
