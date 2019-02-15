@@ -154,8 +154,8 @@ def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
         print("saving best model...")
         torch.save(state, './weights/best_' + model_name + ".pth.tar")
-    else:
-        torch.save(state, './weights/epoch_'+str(epoch)+'_'+model_name+".pth.tar")
+    #else:
+    #    torch.save(state, './weights/epoch_'+str(epoch)+'_'+model_name+".pth.tar")
 
 def log_epoch(logger, epoch, train_loss, val_loss, lr, batch_train, batch_val, data_train, data_val, recall):
     logger.add_scalar('Loss/Train', train_loss, epoch)
