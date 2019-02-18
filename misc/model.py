@@ -82,7 +82,7 @@ class img_embedding(nn.Module):
     def __init__(self, args):
         super(img_embedding, self).__init__()
         
-        if not args.wilcat is None:
+        if not args.wildcat is None:
             self.img_emb = ResNet_wildcat(pretrained=true)
             self.base_layer = nn.Sequential(*list(model_weldon2.children()))
         else:
