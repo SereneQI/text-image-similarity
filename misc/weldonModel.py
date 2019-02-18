@@ -158,7 +158,7 @@ class ResNet_weldon(nn.Module):
         self.fc = nn.Linear(2400, 1000)
 
         # Loading pretrained weights of resnet weldon on imagenet classification
-        if pretrained:
+        if pretrained and not weldon_pretrained_path is None:
             try:
                 state_di = torch.load(
                     weldon_pretrained_path, map_location=lambda storage, loc: storage)['state_dict']
