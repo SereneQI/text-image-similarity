@@ -180,6 +180,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", dest="resume", help="Resume training")
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
     parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
+    parser.add_argument("--wildcat", default=None)
     
 
     args = parser.parse_args()
