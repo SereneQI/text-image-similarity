@@ -5,7 +5,9 @@
 from nltk.tokenize import word_tokenize
 import argparse
 import fastText
-from utils import encode_sentence_fasttext
+from misc.utils import encode_sentence_fasttext, load_vec
+import io
+from scipy.spatial import distance
 
 def file_len(fname):
     with open(fname) as f:
@@ -30,8 +32,6 @@ def tokenizeFile(filename, file_out):
             fout.write('\n')
             
                 
-        
-
 def embedFile(args):
     print("Compute embeddings for the file:", args.file)
     embed = fastText.load_model(args.dict)
@@ -46,17 +46,43 @@ def embedFile(args):
             fout.write(i+'\t'+str(es)+'\n')
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process some integers.')
-
-    parser.add_argument("-f", "--file", help="File to encode", required=True)
-    parser.add_argument("-o", "--output", help='Output file', required=True)
-    parser.add_argument("-dict", dest='dict', help='Dictionnary link', default="./data/wiki.fr.bin")
-    parser.add_argument("-t", "--tokenize_only", default="True")
-       
-    args = parser.parse_args()
-    if args.tokenize_only == 'False':
-        embedFile(args)
-    else:
-        tokenizeFile(args.file, args.output)
+def CompareDict(path1, path2):
+    print("Comparing model :", path1, " and ", path2)
+    embed1, id2word1, word2id1 = load_vec(path1)
+    embed2, id2word2, word2id2 = load_vec(path2)
     
+    fm_embed, fm_id2word, fm_word2id = [], [], {}
+    sim = []
+    
+    avg_cos_similarity = 0
+    avg_euc_similarity = 0
+    j = 0
+    avg_cos_dissimilarity = 0
+    avg_euc_dissimilarity = 0
+    i = 0
+    
+    
+    for word in word2id1:
+        if word in word2id2: # same word present in both dictionaries
+            sim.append(word)
+            id1 = word2id1[word]
+            id2 = word2id1[word]
+            avg_cos_similarity += distance.cosine(embed1[id1], embed2[id2])
+            avg_euc_similarity += distance.euclidean(embed1[id1], embed2[id2])
+            j += 1
+        else:
+            #fm_embed.append(word)
+            #fm_id2word.append(word)
+            #fm_word2id[word] = i
+            avg_cos_dissimilarity += distance.cosine(embed1[id1], embed2[id2])
+            avg_euc_dissimilarity += distance.euclidean(embed1[id1], embed2[id2])
+            i += 1
+    #return fm_embed, fm_id2word, fm_word2id, sim
+    return avg_cos_similarity/j, avg_euc_similarity/j, avg_cos_dissimilarity/i, avg_euc_dissimilarity/i
+
+def main():
+    CompareDict("data/wiki.multi.en.vec", "data/wiki.multi.fr.vec")
+    CompareDict("data/wiki.multi.en.vec", "data/wiki.multi.de.vec")
+
+if __name__ == '__main__':
+    main()
