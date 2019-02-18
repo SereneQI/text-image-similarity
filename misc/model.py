@@ -81,9 +81,13 @@ class img_embedding(nn.Module):
 
     def __init__(self, args):
         super(img_embedding, self).__init__()
-        model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
-
-        self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
+        
+        if not args.wilcat is None:
+            self.img_emb = ResNet_wildcat(pretrained=true)
+            self.base_layer = nn.Sequential(*list(model_weldon2.children()))
+        else:
+            model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
+            self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
 
         for param in self.base_layer.parameters():
             param.requires_grad = False
