@@ -256,9 +256,11 @@ if __name__ == '__main__':
     print("Loading Data ...", end=" ")
 
     if args.dataset == 'coco':
+        print("Using coco dataset")
         coco_data_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
         coco_data_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
     elif args.dataset == 'shopping':
+        print("Using shopping dataset")
         if args.dataset_file == '':
             coco_data_train = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt', sset="trainrv", transform=prepro)
             coco_data_val = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt',sset="val", transform=prepro_val)
@@ -271,6 +273,7 @@ if __name__ == '__main__':
         coco_data_val = Multi30k(sset="val", lang='en', transform=prepro_val)
         
     elif args.dataset == "double":
+        print("Double dataset, coco + multi30k")
         d1_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
         d2_train = Multi30k(sset="train", lang='en', transform=prepro)
         d1_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
