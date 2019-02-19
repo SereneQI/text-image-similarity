@@ -215,7 +215,7 @@ if __name__ == '__main__':
         join_emb = joint_embedding(checkpoint['args_dict']).cuda()
         join_emb.load_state_dict(checkpoint["state_dict"])
         last_epoch = checkpoint["epoch"]
-        optimizer = checkpoint["optimizer"]
+        opti = checkpoint["optimizer"]
         print("Load from epoch :", last_epoch)
         
         last_epoch += 1   
@@ -240,7 +240,7 @@ if __name__ == '__main__':
             param.requires_grad = False
         
         
-        opti = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
+        opti = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr, weight_decay=1e-4)
         #opti = apex.optimizers.FusedAdam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
         #opti = apex.fp16_utils.FP16_Optimizer(optimizer)
         lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
