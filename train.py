@@ -220,7 +220,7 @@ if __name__ == '__main__':
         
         last_epoch += 1   
             
-        lr_scheduler = MultiStepLR(optimizer, args.lrd[1:], gamma=args.lrd[0])
+        lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
         lr_scheduler.step(last_epoch)
         best_rec = checkpoint['best_rec']
         
