@@ -156,8 +156,16 @@ class Multi30k(data.Dataset):
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
-        self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
-        self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+        
+        if "en" in lang:
+            self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
+        if "fr" in lang:
+            self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+        if "de" in lang:
+            self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
+        if "cs" in lang:
+            self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
+        
         
         self.captions = []
         
@@ -221,8 +229,15 @@ class Multi30k(data.Dataset):
         caption, lang, imId = self.captions[index]
         if lang == 'fr':
             cap = encode_sentence(caption, self.frEmb, self.frWordsID, tokenize=False)
-        else:
+        elif lang == 'en':
             cap = encode_sentence(caption, self.engEmb, self.engWordsID, tokenize=False)
+        elif lang == 'de':
+            cap = encode_sentence(caption, self.deEmb, self.deWordsID, tokenize=False)
+        elif lang == 'cs':
+            cap = encode_sentence(caption, self.csEmb, self.csWordsID, tokenize=False)
+        else:
+            print("Unknown language : ", lang)
+            return None
         
         im = self.transform(Image.open(self.imList[imId]))
         
