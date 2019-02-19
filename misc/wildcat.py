@@ -147,7 +147,7 @@ class ResNet_wildcat(nn.Module):
         resnet = models.resnet152(pretrained=pretrained)
 
         self.base_layer = nn.Sequential(*list(resnet.children())[:-2])
-        self.spaConv = nn.Conv2d(2048, 2400, 1,)
+        #self.spaConv = nn.Conv2d(2048, 2400, 1,)
         self.classPool = ClassWisePool(1)
         # add spatial aggregation layer
         self.wldPool = WildcatPool2d(1)
