@@ -72,7 +72,7 @@ def _load_dictionary(dir_st):
 def load_vec(emb_path):
     """
         Load FastText model .vec
-        Returns dictionaries : embeddings, id2word and word2id
+        Returns : embeddings (matrix index -> embedding), id2word ( index -> word ) and word2id ( word -> index)
     """
     vectors = []
     word2id = {}
@@ -122,6 +122,11 @@ def encode_sentences(sents, embed, dico):
 
 
 def encode_sentence(sent, embed, dico, tokenize=True):
+    """
+        Encode one sentence but sliting spaces
+        Input : sentence (string), embeddings matrix, dicionary (word -> index in the matrix)
+        Output : embedding of each word in the sentence
+    """
     sent = sent.strip().lower()
     if tokenize:
         sent_tok = word_tokenize(sent)
@@ -129,7 +134,7 @@ def encode_sentence(sent, embed, dico, tokenize=True):
         sent_tok = sent.split(' ')
         
     embed_size = len(embed[0])
-    sent_in = torch.FloatTensor(len(sent_tok), embed_size))
+    sent_in = torch.FloatTensor(len(sent_tok), embed_size)
 
     for i, w in enumerate(sent_tok):
         w = w.strip()
@@ -144,6 +149,11 @@ def encode_sentence(sent, embed, dico, tokenize=True):
     return sent_in
 
 def encode_sentence_fasttext(sent, embed, tokenize=True, french=False):
+    """
+        Encode sentence with fasttext model
+        Input : sentence to encode and fasttext model
+        return embedding for each word in the sentence
+    """
     if tokenize:
         if french:
             sent_tok = fr_preprocess(sent)
