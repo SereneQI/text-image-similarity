@@ -93,6 +93,50 @@ class WildcatPool2d(nn.Module):
         return self.__class__.__name__ + ' (kmax=' + str(self.kmax) + ', kmin=' + str(self.kmin) + ', alpha=' + str(
             self.alpha) + ')'
             
+        
+        
+class ClassWisePoolFunction(Function):
+    def __init__(self, num_maps):
+        super(ClassWisePoolFunction, self).__init__()
+        self.num_maps = num_maps
+
+    def forward(self, input):
+        # batch dimension
+        batch_size, num_channels, h, w = input.size()
+
+        if num_channels % self.num_maps != 0:
+            print('Error in ClassWisePoolFunction. The number of channels has to be a multiple of the number of maps per class')
+            sys.exit(-1)
+
+        num_outputs = int(num_channels / self.num_maps)
+        x = input.view(batch_size, num_outputs, self.num_maps, h, w)
+        output = torch.sum(x, 2)
+        self.save_for_backward(input)
+        return output.view(batch_size, num_outputs, h, w) / self.num_maps
+
+    def backward(self, grad_output):
+        input, = self.saved_tensors
+
+        # batch dimension
+        batch_size, num_channels, h, w = input.size()
+        num_outputs = grad_output.size(1)
+
+        grad_input = grad_output.view(batch_size, num_outputs, 1, h, w).expand(batch_size, num_outputs, self.num_maps,
+                                                                               h, w).contiguous()
+
+        return grad_input.view(batch_size, num_channels, h, w)
+
+
+class ClassWisePool(nn.Module):
+    def __init__(self, num_maps):
+        super(ClassWisePool, self).__init__()
+        self.num_maps = num_maps
+
+    def forward(self, input):
+        return ClassWisePoolFunction(self.num_maps)(input)
+
+    def __repr__(self):
+        return self.__class__.__name__ + ' (num_maps={num_maps})'.format(num_maps=self.num_maps)
             
             
 class ResNet_wildcat(nn.Module):
@@ -106,7 +150,7 @@ class ResNet_wildcat(nn.Module):
         self.spaConv = nn.Conv2d(2048, 2400, 1,)
 
         # add spatial aggregation layer
-        self.wldPool = WildcatPool2d(15)
+        self.wldPool = WildcatPool2d(1)
         # Linear layer for imagenet classification
         #self.fc = nn.Linear(2400, 1000)
 
