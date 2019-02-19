@@ -25,6 +25,7 @@ import torch.nn as nn
 
 from misc.config import path
 from misc.weldonModel import ResNet_weldon
+from misc.wildcat import ResNet_wildcat
 from sru import SRU
 import torch.nn.init as weight_init
 
@@ -83,8 +84,8 @@ class img_embedding(nn.Module):
         super(img_embedding, self).__init__()
         
         if not args.wildcat is None:
-            self.img_emb = ResNet_wildcat(pretrained=true)
-            self.base_layer = nn.Sequential(*list(model_weldon2.children()))
+            model = ResNet_wildcat(pretrained=True)
+            self.base_layer = nn.Sequential(*list(model.children()))
         else:
             model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
             self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
@@ -115,9 +116,9 @@ class joint_embedding(nn.Module):
         #self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
         #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
         
-        
-        self.fc = nn.Linear(2400, args.dimemb, bias=True)
         self.dropout = torch.nn.Dropout(p=0.5)
+        self.fc = nn.Linear(2400, args.dimemb, bias=True)
+        
 
     def forward(self, imgs, caps, lengths):
         if imgs is not None:
