@@ -148,7 +148,7 @@ class ResNet_wildcat(nn.Module):
 
         self.base_layer = nn.Sequential(*list(resnet.children())[:-2])
         self.spaConv = nn.Conv2d(2048, 2400, 1,)
-
+        self.classPool = ClassWisePool(1)
         # add spatial aggregation layer
         self.wldPool = WildcatPool2d(1)
         # Linear layer for imagenet classification
@@ -164,6 +164,7 @@ class ResNet_wildcat(nn.Module):
     def forward(self, x):
         x = self.base_layer(x)
         x = self.spaConv(x)
+        x = self.classPool(x)
         x = self.wldPool(x)
         x = x.view(x.size(0), -1)
         #x = self.fc(x)
