@@ -117,7 +117,10 @@ class joint_embedding(nn.Module):
         #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
         
         self.dropout = torch.nn.Dropout(p=0.5)
-        self.fc = nn.Linear(2400, args.dimemb, bias=True)
+        if args.wildcat is None:
+            self.fc = nn.Linear(2400, args.dimemb, bias=True)
+        else:
+            self.fc = nn.Linear(2048, args.dimemb, bias=True)
         
 
     def forward(self, imgs, caps, lengths):
