@@ -128,16 +128,17 @@ def encode_sentence(sent, embed, dico, tokenize=True):
     else:
         sent_tok = sent.split(' ')
         
-    sent_in = torch.FloatTensor(len(sent_tok), 300)
+    embed_size = len(embed[0])
+    sent_in = torch.FloatTensor(len(sent_tok), embed_size))
 
     for i, w in enumerate(sent_tok):
         w = w.strip()
         if '-' in w:
             w = w.split('-')[-1]
         try:
-            sent_in[i, :300] = torch.from_numpy(embed[dico[w]])
+            sent_in[i, :embed_size] = torch.from_numpy(embed[dico[w]])
         except KeyError:
-            sent_in[i, :300] = torch.from_numpy(embed[0])
+            sent_in[i, :embed_size] = torch.from_numpy(embed[0])
             #sent_in[i, :300] = torch.from_numpy(embed.get_word_vector("unk"))
 
     return sent_in
