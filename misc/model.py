@@ -83,18 +83,8 @@ class img_embedding(nn.Module):
     def __init__(self, args):
         super(img_embedding, self).__init__()
         
-        try:
-            if args.wildcat:
-                print("Wildcat")
-                model = ResNet_wildcat(pretrained=True)
-                self.base_layer = nn.Sequential(*list(model.children()))
-            else:
-                model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
-                self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
-        except AttributeError:
-            model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
-            self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
-
+        model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
+        self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
         for param in self.base_layer.parameters():
             param.requires_grad = False
 
@@ -122,14 +112,7 @@ class joint_embedding(nn.Module):
         #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
         
         self.dropout = torch.nn.Dropout(p=0.5)
-        try:
-            if args.wildcat:
-                print("Create wildcat model")
-                self.fc = nn.Linear(2048, args.dimemb, bias=True)        
-            else:
-                self.fc = nn.Linear(2400, args.dimemb, bias=True)
-        except AttributeError:
-            self.fc = nn.Linear(2400, args.dimemb, bias=True)
+        self.fc = nn.Linear(2400, args.dimemb, bias=True)
         
 
     def forward(self, imgs, caps, lengths):

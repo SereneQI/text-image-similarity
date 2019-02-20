@@ -180,7 +180,6 @@ if __name__ == '__main__':
     parser.add_argument("-r", dest="resume", help="Resume training")
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
     parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
-    parser.add_argument("--wildcat", default=None)
     parser.add_argument("--embed_type", default="multi", help="multi or align")
     
 
@@ -216,6 +215,7 @@ if __name__ == '__main__':
         join_emb = joint_embedding(checkpoint['args_dict'])
         join_emb.load_state_dict(checkpoint["state_dict"])
         join_emb = torch.nn.DataParallel(join_emb.cuda())
+        
         last_epoch = checkpoint["epoch"]
         opti = checkpoint["optimizer"]
         print("Load from epoch :", last_epoch)
