@@ -242,7 +242,7 @@ if __name__ == '__main__':
             param.requires_grad = False
         
         
-        opti = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr, weight_decay=1e-4)
+        opti = optim.Adam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
         #opti = apex.optimizers.FusedAdam(filter(lambda p: p.requires_grad, join_emb.parameters()), lr=args.lr)
         #opti = apex.fp16_utils.FP16_Optimizer(optimizer)
         lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])

@@ -25,7 +25,6 @@ import torch.nn as nn
 
 from misc.config import path
 from misc.weldonModel import ResNet_weldon
-from misc.wildcat import ResNet_wildcat
 from sru import SRU
 import torch.nn.init as weight_init
 
