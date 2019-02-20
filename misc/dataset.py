@@ -156,6 +156,7 @@ class Multi30k(data.Dataset):
         self.imList = []
         self.rootDir = image_dir
         
+        #langs = ['fr', 'en', 'de', 'cs']
         
         if "en" in lang:
             if embed_type == "multi":
@@ -164,21 +165,32 @@ class Multi30k(data.Dataset):
             elif embed_type == "align":
                 print("Using aligned embeddings")
                 self.engEmb, _, self.engWordsID = _load_vec('data/wiki.en.align.vec')
+            elif embed_type == 'bivec':
+                print("Using bivec embeddings")
+                self.engEmb, _, self.engWordsID = _load_vec('data/bivec_model_vec.en-fr.en')
+            else:
+                print("Unknown embedding type :", embed_type)
         if "fr" in lang:
             if embed_type == "multi":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
             elif embed_type == "align":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.fr.align.vec')
+            elif embed_type == 'bivec':
+                self.frEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.en-fr.fr')
         if "de" in lang:
             if embed_type == "multi":
                 self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
             elif embed_type == "align":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.de.align.vec')
+            elif embed_type == "bivec":
+                print("Bivec not supported for german")
         if "cs" in lang:
             if embed_type == "multi":
                 self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
-            else:
+            elif embed_type == "align":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.cs.align.vec')
+            elif embed_type == "bivec":
+                print("Bivec not supported for czech")
         
         
         self.captions = []
