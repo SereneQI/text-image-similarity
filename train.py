@@ -181,6 +181,7 @@ if __name__ == '__main__':
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
     parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
     parser.add_argument("--wildcat", default=None)
+    parser.add_argument("--embed_type", default="multi", help="multi or align")
     
 
     args = parser.parse_args()
@@ -212,8 +213,9 @@ if __name__ == '__main__':
 
     if args.resume: # Resume previous learning
         checkpoint = torch.load(args.resume, map_location=lambda storage, loc: storage)
-        join_emb = joint_embedding(checkpoint['args_dict']).cuda()
+        join_emb = joint_embedding(checkpoint['args_dict'])
         join_emb.load_state_dict(checkpoint["state_dict"])
+        join_emb = torch.nn.DataParallel(join_emb.cuda())
         last_epoch = checkpoint["epoch"]
         opti = checkpoint["optimizer"]
         print("Load from epoch :", last_epoch)
@@ -269,9 +271,9 @@ if __name__ == '__main__':
             coco_data_train = Shopping(args, '/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
             coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
     elif args.dataset == "multi30k":
-        print("multi30k dataset")
-        coco_data_train = Multi30k(sset="train", lang='en', transform=prepro)
-        coco_data_val = Multi30k(sset="val", lang='en', transform=prepro_val)
+        print("multi30k dataset in ", args.lang)
+        coco_data_train = Multi30k(sset="train", lang='en', transform=prepro, embed_type=args.embed_type)
+        coco_data_val = Multi30k(sset="val", lang='en', transform=prepro_val, embed_type=args.embed_type)
         
     elif args.dataset == "double":
         print("Double dataset, coco + multi30k")
