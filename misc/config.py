@@ -2,11 +2,11 @@
 path = {
     # Path to the Ms-CoCo dataset folder (containing annotations and images subfolder)
     # http://cocodataset.org/#home
-    "COCO_ROOT": "/data/datasets/coco/",
+    "COCO_ROOT": "/data/coco/",
 
     # Data set split from "Deep Visual-Semantic Alignments for Generating Image Descriptions"  Karpathy et al.
     # Coco split can be found here https://cs.stanford.edu/people/karpathy/deepimagesent/coco.zip
-    "COCO_RESTVAL_SPLIT": "/data/datasets/coco/dataset.json",
+    "COCO_RESTVAL_SPLIT": "/data/coco/dataset.json",
 
     # Path to the weights of classification model (resnet + weldon pooling) pretrained on imagenet
     # https://cloud.lip6.fr/index.php/s/sEiwuVj7UXWwSjf

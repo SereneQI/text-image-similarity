@@ -45,6 +45,7 @@ if __name__ == '__main__':
     parser.add_argument('-ds', "--dataset", default="mutli30k", help='Choose between coco, multi30k or shopping')
     parser.add_argument('-d', '--dict', default="data/wiki.multi.en.vec")
     parser.add_argument("-la", "--lang", default="en")
+    parser.add_argument("--wildcat", default=None)
 
     args = parser.parse_args()
 

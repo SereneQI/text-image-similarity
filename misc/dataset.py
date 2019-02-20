@@ -152,7 +152,11 @@ class Shopping(data.Dataset):
 
 class Multi30k(data.Dataset):
     
+<<<<<<< HEAD
     def __init__(self, sset="train", image_dir="/data/flickr30k/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None, embed_type="multi"):
+=======
+    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None):
+>>>>>>> 6eca642aa7312d5c5ef9abe21be7ca397754542d
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
