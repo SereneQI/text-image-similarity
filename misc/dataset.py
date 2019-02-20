@@ -152,19 +152,34 @@ class Shopping(data.Dataset):
 
 class Multi30k(data.Dataset):
     
-    def __init__(self, sset="train", image_dir="/data/flickr30k/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None):
+    def __init__(self, sset="train", image_dir="/data/flickr30k/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None, embed_type="multi"):
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
         
+        
         if "en" in lang:
-            self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
+            if embed_type == "multi":
+                print("Using multi embeddings")
+                self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
+            elif embed_type == "align":
+                print("Using aligned embeddings")
+                self.engEmb, _, self.engWordsID = _load_vec('data/wiki.en.align.vec')
         if "fr" in lang:
-            self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+            if embed_type == "multi":
+                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+            elif embed_type == "align":
+                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.fr.align.vec')
         if "de" in lang:
-            self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
+            if embed_type == "multi":
+                self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
+            elif embed_type == "align":
+                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.de.align.vec')
         if "cs" in lang:
-            self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
+            if embed_type == "multi":
+                self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
+            else:
+                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.cs.align.vec')
         
         
         self.captions = []
