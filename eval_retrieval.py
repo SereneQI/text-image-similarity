@@ -27,7 +27,7 @@ import torch
 import torchvision.transforms as transforms
 
 from misc.dataset import CocoCaptionsRV, Multi30k
-from misc.evaluation import eval_recall, k_recall
+from misc.evaluation import eval_recall, eval_recall5
 from misc.model import joint_embedding
 from misc.utils import collate_fn_padded
 from torch.utils.data import DataLoader
@@ -46,6 +46,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dict', default="data/wiki.multi.en.vec")
     parser.add_argument("-la", "--lang", default="en")
     parser.add_argument("--wildcat", default=None)
+    parser.add_argument("--eval_type", default=1, help="1 or 5", type=int)
 
     args = parser.parse_args()
 
@@ -99,5 +100,10 @@ if __name__ == '__main__':
             print(str((i + 1) * args.batch_size) + "/" + str(len(dataset)) + " pairs encoded - Time per batch: " + str((time.time() - end)) + "s")
 
         end = time.time()
-
-    print(args.model_path, args.dset, eval_recall(imgs_enc, caps_enc))
+    
+    if args.eval_type == 1:
+        print(args.model_path, args.dset, eval_recall(imgs_enc, caps_enc))
+    elif args.eval_type == 5:
+        print(args.model_path, args.dset, eval_recall5(imgs_enc, caps_enc))
+    else:
+        print("Unknown evaluation type")
