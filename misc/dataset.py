@@ -183,7 +183,7 @@ class Multi30k(data.Dataset):
             elif embed_type == "align":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.de.align.vec')
             elif embed_type == "bivec":
-                print("Bivec not supported for german")
+                self.frEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.de-en.de.vec')
         if "cs" in lang:
             if embed_type == "multi":
                 self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
