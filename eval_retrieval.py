@@ -47,6 +47,7 @@ if __name__ == '__main__':
     parser.add_argument("-la", "--lang", default="en")
     parser.add_argument("--wildcat", default=None)
     parser.add_argument("--eval_type", default=1, help="1 or 5", type=int)
+    parser.add_argument("--embed_type", default="multi")
 
     args = parser.parse_args()
 
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     if args.dataset == "coco":
         dataset = CocoCaptionsRV(args, sset=args.dset, transform=prepro_val)
     else:
-        dataset = Multi30k(sset=args.dset, transform=prepro_val, lang=args.lang)
+        dataset = Multi30k(sset=args.dset, transform=prepro_val, lang=args.lang, embed_type=args.embed_type)
 
     print("Dataset size: ", len(dataset))
 
