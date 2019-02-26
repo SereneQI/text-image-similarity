@@ -167,7 +167,7 @@ class Multi30k(data.Dataset):
                 self.engEmb, _, self.engWordsID = _load_vec('data/wiki.en.align.vec')
             elif embed_type == 'bivec':
                 print("Using bivec embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('data/bivec_model_vec.en-fr.en')
+                self.engEmb, _, self.engWordsID = _load_vec('data/bivec_model_vec.en-fr.en.vec')
             else:
                 print("Unknown embedding type :", embed_type)
         if "fr" in lang:
@@ -176,7 +176,7 @@ class Multi30k(data.Dataset):
             elif embed_type == "align":
                 self.frEmb, _, self.frWordsID = _load_vec('data/wiki.fr.align.vec')
             elif embed_type == 'bivec':
-                self.frEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.en-fr.fr')
+                self.frEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.en-fr.fr.vec')
         if "de" in lang:
             if embed_type == "multi":
                 self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
