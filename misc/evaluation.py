@@ -39,6 +39,39 @@ def cosine_sim(A, B):
     return scores
 
 
+
+
+
+
+def multilingual_recall(imgs, caps, indices, ks=[1,5,10]):
+    """
+        Compute multingual recall
+    """
+    imgs = np.vstack(imgs)
+    caps = np.vstack(caps)
+
+    scores = -cosine_sim(imgs, caps)
+    ranks = np.argsort(np.argsort(scores))
+    print(ranks)
+    # scores represent all the similarity between each images and each captions
+
+    recall = {k:0 for k in ks}
+
+    for i,rank in enumerate(ranks):
+        for k in ks:
+            found = False
+            for j, r in enumerate(rank):
+                if indices[j] == i and r <= k: #if the caption correspond to the image and is ranked less than k
+                    found = True
+                if found:
+                    break
+            if found:
+                recall[k] += 1
+    
+    return [recall[k] / imgs.shape[0]*100 for k in ks]
+        
+
+
 def k_recall(imgs, caps, ks=[1,5,10]):
     #print(imgs)
     imgs = np.vstack(imgs)
@@ -57,8 +90,6 @@ def k_recall(imgs, caps, ks=[1,5,10]):
     return (recall_img / imgs.shape[0])*100, recall_cap / caps.shape[0]*100, np.median(ranks), np.median(ranks_caps)
     
     
-    
-
 
 
 def recall_at_k_multi_cap(imgs_enc, caps_enc, ks=[1, 5, 10], scores=None):
