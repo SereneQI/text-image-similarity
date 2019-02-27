@@ -181,14 +181,14 @@ class Multi30k(data.Dataset):
             if embed_type == "multi":
                 self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
             elif embed_type == "align":
-                self.deEmb, _, self.frWordsID = _load_vec('data/wiki.de.align.vec')
+                self.deEmb, _, self.deWordsID = _load_vec('data/wiki.de.align.vec')
             elif embed_type == "bivec":
-                self.deEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.de-en.de.vec')
+                self.deEmb, _, self.deWordsID = _load_vec('data/bivec_model_vec.de-en.de.vec')
         if "cs" in lang:
             if embed_type == "multi":
                 self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
             elif embed_type == "align":
-                self.csEmb, _, self.frWordsID = _load_vec('data/wiki.cs.align.vec')
+                self.csEmb, _, self.csWordsID = _load_vec('data/wiki.cs.align.vec')
             elif embed_type == "bivec":
                 print("Bivec not supported for czech")
         
