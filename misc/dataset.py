@@ -207,7 +207,7 @@ class Multi30k(data.Dataset):
                 for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.de"))):
                     self.captions.append( (line.rstrip(), 'de', i) )
             if "cs" in lang:
-                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.de"))):
+                for i, line in enumerate(open(os.path.join(tok_dir, "train.lc.norm.tok.cs"))):
                     self.captions.append( (line.rstrip(), 'cs', i) )
             
         elif "val" in sset:
@@ -223,7 +223,7 @@ class Multi30k(data.Dataset):
                 for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.de"))):
                     self.captions.append( (line.rstrip(), 'de', i) )
             if "cs" in lang:
-                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.de"))):
+                for i, line in enumerate(open(os.path.join(tok_dir, "val.lc.norm.tok.cs"))):
                     self.captions.append( (line.rstrip(), 'cs', i) )
             
         else:
@@ -239,7 +239,7 @@ class Multi30k(data.Dataset):
                 for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.de"))):
                     self.captions.append( (line.rstrip(), 'de', i) )
             if "cs" in lang:
-                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.de"))):
+                for i, line in enumerate(open(os.path.join(tok_dir, "test_2016_flickr.lc.norm.tok.cs"))):
                     self.captions.append( (line.rstrip(), 'cs', i) )
             
         
