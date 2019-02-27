@@ -279,9 +279,9 @@ if __name__ == '__main__':
         print("Double dataset, coco + multi30k")
         print("multi30k dataset in ", args.lang)
         d1_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
-        d2_train = Multi30k(sset="train", lang=args.lang, transform=prepro)
+        d2_train = Multi30k(sset="train", lang=args.lang, transform=prepro, embed_type=args.embed_type)
         d1_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
-        d2_val = Multi30k(sset="val", lang=args.lang, transform=prepro_val)
+        d2_val = Multi30k(sset="val", lang=args.lang, transform=prepro_val, embed_type=args.embed_type)
         
         coco_data_train = DoubleDataset(d1_train, d2_train)
         coco_data_val = DoubleDataset(d1_val, d2_val)
