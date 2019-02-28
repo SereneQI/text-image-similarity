@@ -333,7 +333,7 @@ if __name__ == '__main__':
                             
             for param in join_emb.module.cap_emb.parameters():
                 param.requires_grad = True
-            opti.add_param_group({'params': join_emb.module.cap_emb.parameters(), 'lr': opti.param_groups[0]
+            opti.add_param_group({'params': filter(lambda p: p.requires_grad, join_emb.module.cap_emb.parameters()), 'lr': opti.param_groups[0]
                                        ['lr'], 'initial_lr': args.lr})
             lr_scheduler = MultiStepLR(opti, args.lrd[1:], gamma=args.lrd[0])
 

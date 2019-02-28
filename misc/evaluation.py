@@ -135,7 +135,7 @@ def avg_recall(imgs_enc, caps_enc):
 
     return [np.sum([x[i] for x in res], axis=0) / len(res) for i in range(len(res[0]))]
     
-def avg_recall(imgs_enc, caps_enc):
+def avg_recall5(imgs_enc, caps_enc):
     """ Compute 5 fold recall on set of 1000 images with 5 captions each """
     res = list()
     if len(imgs_enc) < 5000 or len(imgs_enc) % 5000 == 0:
@@ -156,7 +156,7 @@ def eval_recall5(imgs_enc, caps_enc):
     imgs_enc = np.vstack(flatten(imgs_enc))
     caps_enc = np.vstack(flatten(caps_enc))
 
-    res = avg_recall(imgs_enc, caps_enc)
+    res = avg_recall5(imgs_enc, caps_enc)
 
     return res
 
