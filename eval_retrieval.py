@@ -61,9 +61,7 @@ if __name__ == '__main__':
     for param in join_emb.parameters():
         param.requires_grad = False
 
-    join_emb.to(device)
-    join_emb.eval()
-
+    join_emb = torch.nn.DataParallel(join_emb.cuda().eval())
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
