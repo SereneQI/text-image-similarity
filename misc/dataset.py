@@ -153,7 +153,7 @@ class Shopping(data.Dataset):
 
 class MultiLingualDataset(data.Dataset):
     def __init__(self, filename, image_dir, captionsFileList, dictDict, transform, eval_mode=False):
-        self.transform=transforms
+        self.transform=transform
         self.rootDir = image_dir
         self.embeddings = {}
         self.captions = {}
@@ -165,24 +165,33 @@ class MultiLingualDataset(data.Dataset):
                     self.embeddings[lang] = _load_vec(dictDict[lang])
                     self.captions[lang] = [ (line.rstrip(), i) for i, line in enumerate(fcap)]
         
-        self.imList = [os.path.join(image_dir,imName.rstrip()) for imName in filename]
+        self.imList = [os.path.join(image_dir,imName.rstrip()) for imName in open(filename).read().splitlines()]
                     
-                    
-        def __len__(self):
-            return np.sum([len(self.captions[lang]) for lang in self.captions])
-            
-        def __getitem__(self, index):
-            baseIndex = 0
-            currentIndex = 0
-            for lang in self.captions:
-                if index < baseIndex + len(self.captions[lang]):
-                    currentIndex = index - baseIndex
-                    image = self.transform(Image.open(self.imList[currentIndex])
-                    cap = self.captions[lang][currentIndex]
-                    break
-                else:
-                    baseIndex += len(self.captions[lang])
-            return image, cap
+    def __len__(self):
+        return np.sum([len(self.captions[lang]) for lang in self.captions])
+    
+    def getImage(self, index):
+        image = Image.open(self.imList[currentIndex])
+        image = self.transform(image)
+        return image
+    
+    def getCaption(self, lang, index):
+        return self.captions[lang][index]
+        
+
+    def __getitem__(self, index):
+        baseIndex = 0
+        currentIndex = 0
+        for lang in self.captions:
+            if index < baseIndex + len(self.captions[lang]):
+                currentIndex = index - baseIndex
+                image = Image.open(self.imList[currentIndex])
+                image = self.transform(image)
+                cap = self.captions[lang][currentIndex]
+                break
+            else:
+                baseIndex += len(self.captions[lang])
+        return image, cap
         
 
 
