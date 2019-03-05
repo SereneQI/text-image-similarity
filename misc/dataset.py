@@ -151,6 +151,33 @@ class Shopping(data.Dataset):
 
 
 
+
+class ImageDataset(data.Dataset):
+    def __init__(self, filename, transform):
+        self.imList = [os.path.join(image_dir,imName.rstrip()) for imName in open(filename).read().splitlines()]
+        self.transform=transform
+        
+    def __len__(self):
+        return len(self.imList)
+        
+    def __getitem__(self, index):
+        image = Image.open(self.imList[index])
+        image = self.transform(image)
+        return image
+        
+        
+class CaptionDataset(data.Dataset):
+    def __init__(self, filename, dictionary):
+        self.embed = _load_vec(dictionary)
+        self.sentences = [ (line.rstrip(), i) for i, line in enumerate(open(filename))]
+        
+    def __len__(self):
+        return len(self.sentences)
+        
+    def __getitem__(self, index):
+        encode_sentence(self.sentences[index], self.embed[0], self.embed[2], tokenize=False)
+        
+
 class MultiLingualDataset(data.Dataset):
     def __init__(self, filename, image_dir, captionsFileList, dictDict, transform, eval_mode=False):
         self.transform=transform
@@ -171,7 +198,7 @@ class MultiLingualDataset(data.Dataset):
         return np.sum([len(self.captions[lang]) for lang in self.captions])
     
     def getImage(self, index):
-        image = Image.open(self.imList[currentIndex])
+        image = Image.open(self.imList[index])
         image = self.transform(image)
         return image
     
