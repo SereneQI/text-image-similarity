@@ -176,7 +176,7 @@ class MultiLingualDataset(data.Dataset):
         return image
     
     def getCaption(self, lang, index):
-        return self.captions[lang][index]
+        return encode_sentence(self.captions[lang][index], self.embeddings[lang][0], self.embeddings[lang][2], tokenize=False)
         
 
     def __getitem__(self, index):
@@ -187,8 +187,9 @@ class MultiLingualDataset(data.Dataset):
                 currentIndex = index - baseIndex
                 image = Image.open(self.imList[currentIndex])
                 image = self.transform(image)
+                
                 cap = self.captions[lang][currentIndex]
-                break
+                cap = encode_sentence(caption, self.embeddings[lang][0], self.embeddings[lang][2], tokenize=False)
             else:
                 baseIndex += len(self.captions[lang])
         return image, cap
