@@ -70,10 +70,8 @@ class CocoCaptionsRV(data.Dataset):
         #path_params = os.path.join(word_dict_path, 'utable.npy')
         #self.params = np.load(path_params, encoding='latin1')
         if args.dict[-3:] == 'vec':
-            print("Using .vec file")
             self.embed, self.id2word, self.word2id = _load_vec(args.dict)
         else:
-            print("Using .bin file")
             self.embed = fastText.load_model(args.dict)
             self.word2id = None
         #self.dico = _load_dictionary(word_dict_path)
