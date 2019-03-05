@@ -153,7 +153,7 @@ class Shopping(data.Dataset):
 
 
 class ImageDataset(data.Dataset):
-    def __init__(self, filename, transform):
+    def __init__(self, filename, image_dir, transform):
         self.imList = [os.path.join(image_dir,imName.rstrip()) for imName in open(filename).read().splitlines()]
         self.transform=transform
         
@@ -165,6 +165,7 @@ class ImageDataset(data.Dataset):
         image = self.transform(image)
         return image
         
+
         
 class CaptionDataset(data.Dataset):
     def __init__(self, filename, dictionary):
@@ -175,8 +176,10 @@ class CaptionDataset(data.Dataset):
         return len(self.sentences)
         
     def __getitem__(self, index):
-        encode_sentence(self.sentences[index], self.embed[0], self.embed[2], tokenize=False)
+        return self.sentences[index]
+        return encode_sentence(self.sentences[index][0], self.embed[0], self.embed[2], tokenize=False), self.sentences[index][1]
         
+
 
 class MultiLingualDataset(data.Dataset):
     def __init__(self, filename, image_dir, captionsFileList, dictDict, transform, eval_mode=False):
