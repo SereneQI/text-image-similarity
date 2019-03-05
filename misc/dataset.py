@@ -6,6 +6,8 @@ import io
 import numpy as np
 import torch
 import torch.utils.data as data
+import numpy as np
+
 
 from misc.config import path
 from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
@@ -146,6 +148,43 @@ class Shopping(data.Dataset):
 
     def __len__(self):
         return len(self.imList)
+
+
+
+class MultiLingualDataset(data.Dataset):
+    def __init__(self, filename, image_dir, captionsFileList, dictDict, transform, eval_mode=False):
+        self.transform=transforms
+        self.rootDir = image_dir
+        self.embeddings = {}
+        self.captions = {}
+        self.eval_mode = eval_mode
+        
+        for captionFile, lang in captionsFileList:
+            if lang in dictDict:
+                with open(captionFile) as fcap:
+                    self.embeddings[lang] = _load_vec(dictDict[lang])
+                    self.captions[lang] = [ (line.rstrip(), i) for i, line in enumerate(fcap)]
+        
+        self.imList = [os.path.join(image_dir,imName.rstrip()) for imName in filename]
+                    
+                    
+        def __len__(self):
+            return np.sum([len(self.captions[lang]) for lang in self.captions])
+            
+        def __getitem__(self, index):
+            baseIndex = 0
+            currentIndex = 0
+            for lang in self.captions:
+                if index < baseIndex + len(self.captions[lang]):
+                    currentIndex = index - baseIndex
+                    image = self.transform(Image.open(self.imList[currentIndex])
+                    cap = self.captions[lang][currentIndex]
+                    break
+                else:
+                    baseIndex += len(self.captions[lang])
+            return image, cap
+        
+
 
 
 class Multi30k(data.Dataset):
