@@ -169,16 +169,25 @@ class ImageDataset(data.Dataset):
         
 class CaptionDataset(data.Dataset):
     def __init__(self, filename, dictionary):
-        self.embed = _load_vec(dictionary)
+        if dictionary[-3:] == 'vec':    
+            self.embed = _load_vec(dictionary)
+            self.fastText = False
+        else:
+            self.embed = fastText.load_model(dictionary)
+            self.fastText = True
         self.sentences = [ (line.rstrip(), i) for i, line in enumerate(open(filename))]
         
     def __len__(self):
         return len(self.sentences)
         
     def __getitem__(self, index):
-        return self.sentences[index]
-        return encode_sentence(self.sentences[index][0], self.embed[0], self.embed[2], tokenize=False), self.sentences[index][1]
+        if self.fastText:
+            return encode_sentence_fasttext(self.sentences[index][0], self.embed[0]), self.sentences[index][1]
+        else:
+            return encode_sentence(self.sentences[index][0], self.embed[0], self.embed[2], tokenize=False), self.sentences[index][1]
         
+
+
 
 
 class MultiLingualDataset(data.Dataset):
