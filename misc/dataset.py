@@ -207,34 +207,34 @@ class Multi30k(data.Dataset):
         if "en" in lang:
             if embed_type == "multi":
                 print("Using multi embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('data/wiki.multi.en.vec')
+                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.multi.en.vec')
             elif embed_type == "align":
                 print("Using aligned embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('data/wiki.en.align.vec')
+                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.en.align.vec')
             elif embed_type == 'bivec':
                 print("Using bivec embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('data/bivec_model_vec.en-fr.en.vec')
+                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.en.vec')
             else:
                 print("Unknown embedding type :", embed_type)
         if "fr" in lang:
             if embed_type == "multi":
-                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.multi.fr.vec')
+                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.multi.fr.vec')
             elif embed_type == "align":
-                self.frEmb, _, self.frWordsID = _load_vec('data/wiki.fr.align.vec')
+                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.fr.align.vec')
             elif embed_type == 'bivec':
-                self.frEmb, _, self.frWordsID = _load_vec('data/bivec_model_vec.en-fr.fr.vec')
+                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.fr.vec')
         if "de" in lang:
             if embed_type == "multi":
-                self.deEmb, _, self.deWordsID = _load_vec('data/wiki.multi.de.vec')
+                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.multi.de.vec')
             elif embed_type == "align":
-                self.deEmb, _, self.deWordsID = _load_vec('data/wiki.de.align.vec')
+                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.de.align.vec')
             elif embed_type == "bivec":
-                self.deEmb, _, self.deWordsID = _load_vec('data/bivec_model_vec.de-en.de.vec')
+                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/bivec_model_vec.de-en.de.vec')
         if "cs" in lang:
             if embed_type == "multi":
-                self.csEmb, _, self.csWordsID = _load_vec('data/wiki.multi.cs.vec')
+                self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.multi.cs.vec')
             elif embed_type == "align":
-                self.csEmb, _, self.csWordsID = _load_vec('data/wiki.cs.align.vec')
+                self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.cs.align.vec')
             elif embed_type == "bivec":
                 print("Bivec not supported for czech")
         
