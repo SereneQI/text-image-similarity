@@ -220,6 +220,12 @@ def collate_fn_padded(data):
     return images, targets, lengths
 
 
+
+def collate_fn_cap_index(data):
+    captions, indices = zip(*data)
+    captions = pad_sequence(captions, batch_first=True)
+    return captions, indices
+
 def collate_fn_cap_padded(data):
     captions = data
 
