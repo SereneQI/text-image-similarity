@@ -182,7 +182,7 @@ class CaptionDataset(data.Dataset):
         
     def __getitem__(self, index):
         if self.fastText:
-            return encode_sentence_fasttext(self.sentences[index][0], self.embed[0]), self.sentences[index][1]
+            return encode_sentence_fasttext(self.sentences[index][0], self.embed), self.sentences[index][1]
         else:
             return encode_sentence(self.sentences[index][0], self.embed[0], self.embed[2], tokenize=False), self.sentences[index][1]
         
