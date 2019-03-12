@@ -161,9 +161,10 @@ class ImageDataset(data.Dataset):
         return len(self.imList)
         
     def __getitem__(self, index):
+        
         image = Image.open(self.imList[index])
         image = self.transform(image)
-        return image
+        return image, index
         
 
         
@@ -181,6 +182,7 @@ class CaptionDataset(data.Dataset):
         return len(self.sentences)
         
     def __getitem__(self, index):
+        #return self.sentences[index]
         if self.fastText:
             return encode_sentence_fasttext(self.sentences[index][0], self.embed), self.sentences[index][1]
         else:
@@ -237,47 +239,50 @@ class MultiLingualDataset(data.Dataset):
 
 
 class Multi30k(data.Dataset):
-    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None, embed_type="multi"):
+    def __init__(self, sset="train", image_dir="/data/datasets/flickr30k_images", split_dir="data/image_splits", tok_dir="data/tok", lang='en', transform=None, embed_type="multi", typ='all', dic=None):
         self.transform = transform
         self.imList = []
         self.rootDir = image_dir
-        
+        self.typ = typ
         #langs = ['fr', 'en', 'de', 'cs']
         
-        if "en" in lang:
-            if embed_type == "multi":
-                print("Using multi embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.multi.en.vec')
-            elif embed_type == "align":
-                print("Using aligned embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.en.align.vec')
-            elif embed_type == 'bivec':
-                print("Using bivec embeddings")
-                self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.en.vec')
-            else:
-                print("Unknown embedding type :", embed_type)
-        if "fr" in lang:
-            if embed_type == "multi":
-                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.multi.fr.vec')
-            elif embed_type == "align":
-                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.fr.align.vec')
-            elif embed_type == 'bivec':
-                self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.fr.vec')
-        if "de" in lang:
-            if embed_type == "multi":
-                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.multi.de.vec')
-            elif embed_type == "align":
-                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.de.align.vec')
-            elif embed_type == "bivec":
-                self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/bivec_model_vec.de-en.de.vec')
-        if "cs" in lang:
-            if embed_type == "multi":
-                self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.multi.cs.vec')
-            elif embed_type == "align":
-                self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.cs.align.vec')
-            elif embed_type == "bivec":
-                print("Bivec not supported for czech")
-        
+        if dic is None:
+            if "en" in lang:
+                if embed_type == "multi":
+                    print("Using multi embeddings")
+                    self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.multi.en.vec')
+                elif embed_type == "align":
+                    print("Using aligned embeddings")
+                    self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/wiki.en.align.vec')
+                elif embed_type == 'bivec':
+                    print("Using bivec embeddings")
+                    self.engEmb, _, self.engWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.en.vec')
+                else:
+                    print("Unknown embedding type :", embed_type)
+            if "fr" in lang:
+                if embed_type == "multi":
+                    self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.multi.fr.vec')
+                elif embed_type == "align":
+                    self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/wiki.fr.align.vec')
+                elif embed_type == 'bivec':
+                    self.frEmb, _, self.frWordsID = _load_vec('/data/m.portaz/bivec_model_vec.en-fr.fr.vec')
+            if "de" in lang:
+                if embed_type == "multi":
+                    self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.multi.de.vec')
+                elif embed_type == "align":
+                    self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/wiki.de.align.vec')
+                elif embed_type == "bivec":
+                    self.deEmb, _, self.deWordsID = _load_vec('/data/m.portaz/bivec_model_vec.de-en.de.vec')
+            if "cs" in lang:
+                if embed_type == "multi":
+                    self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.multi.cs.vec')
+                elif embed_type == "align":
+                    self.csEmb, _, self.csWordsID = _load_vec('/data/m.portaz/wiki.cs.align.vec')
+                elif embed_type == "bivec":
+                    print("Bivec not supported for czech")
+        else:
+            if 'en' in lang:
+                self.engEmb , _, self.engWordsID = _load_vec(dic)
         
         self.captions = []
         
@@ -351,12 +356,18 @@ class Multi30k(data.Dataset):
             print("Unknown language : ", lang)
             return None
         
-        im = self.transform(Image.open(self.imList[imId]))
+        
         
         #return caption, cap
         #return self.imList[imId], caption
-        return im, cap
-        
+        if self.typ == 'image':
+            im = self.transform(Image.open(self.imList[imId]))
+            return im
+        elif self.typ == 'caption':
+            return cap
+        else:
+            im = self.transform(Image.open(self.imList[imId]))
+            return im, cap        
             
         
     

@@ -49,8 +49,9 @@ class SruEmb(nn.Module):
         
     def _process_lengths(self, input):
         max_length = input.size(1)
-        lengths = list(
-            max_length - input.data.eq(0).sum(1, keepdim=True).squeeze())
+        lengths = [max_length - input.data[i].eq(0).sum(1, keepdim=True).squeeze() for i in range(input.shape[0])]
+        #lengths = list(
+        #    max_length - input.data.eq(0).sum(1, keepdim=True).squeeze())
         return lengths
         
     def forward(self, input, lengths=None):
