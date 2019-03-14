@@ -8,7 +8,7 @@ import torch
 import torch.utils.data as data
 import numpy as np
 
-
+from nltk.tokenize import word_tokenize
 from misc.config import path
 from misc.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
 from misc.model import joint_embedding
@@ -479,21 +479,24 @@ class VgCaptions(data.Dataset):
             return len(self.captions)
 """
 
-"""
+
 class CocoSemantic(data.Dataset):
-    def __init__(self, coco_root=path["COCO_ROOT"], word_dict_path=path["WORD_DICT"], transform=None):
+    def __init__(self, coco_root, word_dict_path, transform=None):
         self.coco_root = coco_root
         annFile = os.path.join(coco_root, "annotations/instances_val2014.json")
         self.coco = COCO(annFile)
         self.ids = list(self.coco.imgs.keys())
         self.transform = transform
-        path_params = os.path.join(word_dict_path, 'utable.npy')
-        params = np.load(path_params, encoding='latin1')
-        dico = _load_dictionary(word_dict_path)
+        
+        
+        emb, _ , dic = _load_vec(word_dict_path)
+        
         self.categories = self.coco.loadCats(self.coco.getCatIds())
         # repeats category with plural version
         categories_sent = [cat['name'] + " " + cat['name'] + "s" for cat in self.categories]
-        self.categories_w2v = [encode_sentence(cat, params, dico, tokenize=True) for cat in categories_sent]
+        self.categories_w2v = [encode_sentence(cat, emb, dic, tokenize=True) for cat in categories_sent]
+        self.categories_lengths = [ [len(word_tokenize(cat))] for cat in categories_sent]
+        
     def __getitem__(self, index, raw=False):
         img_id = self.ids[index]
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
@@ -520,9 +523,10 @@ class CocoSemantic(data.Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, img_size, target
+    
     def __len__(self):
         return len(self.ids)
-"""
+
 
 def main(batch_size=32, workers=4 ):
     normalize = transforms.Normalize(
