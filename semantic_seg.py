@@ -34,6 +34,7 @@ from misc.utils import collate_fn_semseg
 from torch.utils.data import DataLoader
 
 
+
 device = torch.device("cuda")
 # device = torch.device("cpu") # uncomment to run with cpu
 
@@ -55,8 +56,7 @@ if __name__ == '__main__':
     for param in join_emb.parameters():
         param.requires_grad = False
 
-    join_emb.to(device)
-    join_emb.eval()
+    join_emb = torch.nn.DataParallel(join_emb.cuda().eval())
 
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         normalize,
     ])
 
-    dataset = CocoSemantic(transform=prepro_val)
+    dataset = CocoSemantic('/data/datasets/coco/', '/data/m.portaz/wiki.multi.en.vec' , transform=prepro_val)
     loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False,
                         num_workers=4, collate_fn=collate_fn_semseg, pin_memory=True)
 
@@ -79,12 +79,12 @@ if __name__ == '__main__':
 
     print("### Starting image embedding ###")
     end = time.time()
-    for i, (imgs, sizes, targets) in enumerate(loader, 0):
+    for i, (imgs, sizes, targets) in enumerate(loader):
 
-        input_imgs = imgs.to(device, non_blocking=True)
+        input_imgs = imgs.cuda()
 
         with torch.no_grad():
-            _, output_imgs = join_emb.img_emb.module.get_activation_map(input_imgs)
+            _, output_imgs = join_emb.module.img_emb.get_activation_map(input_imgs)
 
         output_imgs.size()
         target_ann += targets
@@ -99,23 +99,25 @@ if __name__ == '__main__':
     cats_enc = list()
     # process captions
     print("### Starting category embedding ###")
-    for i, caps in enumerate(dataset.categories_w2v, 0):
+    for i, caps in enumerate(dataset.categories_w2v):
 
-        input_caps = caps.unsqueeze(0).to(device, non_blocking=True)
-
+        input_caps = caps.unsqueeze(0).cuda()
+        print("Input caps shape :", input_caps.shape)
+        print(dataset.categories_lengths[i])
         with torch.no_grad():
-            _, output_caps = join_emb(None, input_caps, None)
+            _, output_caps = join_emb(None, input_caps, dataset.categories_lengths[i])
+            #_, output_caps = join_emb(None, input_caps, None)
 
         cats_enc.append(output_caps.squeeze().cpu().data.numpy())
 
     cats_stack = dict(zip([cat['name'] for cat in dataset.categories], cats_enc))
 
     imgs_stack = np.vstack(imgs_enc)
-
+    #print(imgs_stack)
     print("Dimension of images maps:", imgs_stack.shape)
-    print("Dimension of categories embeddings:", cats_stack.shape)
+    print("Dimension of categories embeddings:", len(cats_enc))
 
-    fc_w = join_emb.fc.module.weight.cpu().data.numpy()
+    fc_w = join_emb.module.fc.weight.cpu().data.numpy()
 
     mAp_at_IoU = compute_semantic_seg(imgs_stack, sizes_list, target_ann, cats_stack, fc_w, args.ctresh)
     print("Coco semantic segmentation IoU@(0.3,0.4,0.5):", mAp_at_IoU)
