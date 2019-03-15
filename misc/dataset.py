@@ -370,7 +370,11 @@ class Multi30k(data.Dataset):
             return im, cap        
             
         
-    
+    def getImageAndCaption(self, index):
+        caption, lang, imId = self.captions[index]
+        im = Image.open(self.imList[imId])
+        
+        return caption, im
 
 
 class FileDataset(data.Dataset):
