@@ -105,8 +105,8 @@ if __name__ == '__main__':
         print("Input caps shape :", input_caps.shape)
         print(dataset.categories_lengths[i])
         with torch.no_grad():
-            _, output_caps = join_emb(None, input_caps, dataset.categories_lengths[i])
-            #_, output_caps = join_emb(None, input_caps, None)
+            #_, output_caps = join_emb(None, input_caps, dataset.categories_lengths[i])
+            _, output_caps = join_emb(None, input_caps, None)
 
         cats_enc.append(output_caps.squeeze().cpu().data.numpy())
 
