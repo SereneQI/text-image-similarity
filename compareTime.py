@@ -7,11 +7,11 @@ import torch
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from misc.dataset import CocoCaptionsRV, Shopping
-from misc.evaluation import eval_recall
-from misc.loss import HardNegativeContrastiveLoss
-from misc.model import joint_embedding
-from misc.utils import AverageMeter, save_checkpoint, collate_fn_padded, log_epoch
+from dataset.dataset import CocoCaptionsRV, Shopping
+from utils.evaluation import eval_recall
+from utils.loss import HardNegativeContrastiveLoss
+from models.model import joint_embedding
+from utils.utils import AverageMeter, save_checkpoint, collate_fn_padded, log_epoch
 from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR

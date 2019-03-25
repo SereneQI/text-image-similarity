@@ -1,25 +1,3 @@
-"""
-****************** COPYRIGHT AND CONFIDENTIALITY INFORMATION ******************
-Copyright (c) 2018 [Thomson Licensing]
-All Rights Reserved
-This program contains proprietary information which is a trade secret/business \
-secret of [Thomson Licensing] and is protected, even if unpublished, under \
-applicable Copyright laws (including French droit d'auteur) and/or may be \
-subject to one or more patent(s).
-Recipient is to retain this program in confidence and is not permitted to use \
-or make copies thereof other than as permitted in a written agreement with \
-[Thomson Licensing] unless otherwise expressly allowed by applicable laws or \
-by [Thomson Licensing] under express agreement.
-Thomson Licensing is a company of the group TECHNICOLOR
-*******************************************************************************
-This scripts permits one to reproduce training and experiments of:
-    Engilberge, M., Chevallier, L., Pérez, P., & Cord, M. (2018, April).
-    Finding beans in burgers: Deep semantic-visual embedding with localization.
-    In Proceedings of CVPR (pp. 3984-3993)
-
-Author: Martin Engilberge
-"""
-
 import argparse
 import time
 
@@ -27,10 +5,10 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 
-from misc.dataset import VgCaptions
-from misc.localization import compute_pointing_game_acc
-from misc.model import joint_embedding
-from misc.utils import collate_fn_img_padded, collate_fn_cap_padded
+from dataset.dataset import VgCaptions
+from utils.localization import compute_pointing_game_acc
+from models.model import joint_embedding
+from utils.utils import collate_fn_img_padded, collate_fn_cap_padded
 from torch.utils.data import DataLoader
 
 
