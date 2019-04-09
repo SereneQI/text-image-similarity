@@ -161,6 +161,10 @@ def encode_sentence_vec(sent, embed, word2id, tokenize=True):
     return sent_in
 
 
+def bpe_encode(sentence, embed):
+    return torch.Tensor(embed.embed(sentence))
+    
+
 def save_checkpoint(state, is_best, model_name, epoch):
     if is_best:
         print("saving best model...")
