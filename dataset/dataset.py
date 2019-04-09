@@ -2,31 +2,27 @@ import json
 import os
 import re
 import io
+import argparse
+import multiprocessing
 
 import numpy as np
 import torch
 import torch.utils.data as data
 import numpy as np
+from PIL import Image
 
 from nltk.tokenize import word_tokenize
+import fastText
+from torchvision import transforms
 
 from utils.config import path
-from utils.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded
+from utils.utils import encode_sentence, _load_dictionary, encode_sentence_fasttext, fr_preprocess, collate_fn_padded, bpe_encode
 from models.model import joint_embedding
-
-
-from PIL import Image
-from pycocotools import mask as maskUtils
-from pycocotools.coco import COCO
-from torchvision import transforms
-import argparse
-import multiprocessing
-#from visual_genome import local as vg
-
-import fastText
 from torch.utils.data import DataLoader
+from bpemb import BPEmb
 
-
+#from pycocotools import mask as maskUtils
+#from pycocotools.coco import COCO
 
 
 def _load_vec(emb_path):
@@ -51,10 +47,9 @@ def _load_vec(emb_path):
 
 class CocoCaptionsRV(data.Dataset):
 
-    def __init__(self, args, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], sset="train", transform=None):
+    def __init__(self, root=path["COCO_ROOT"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], sset="train", transform=None, embed_type='bin', embed_size=300):
         self.root = os.path.join(root, "images/")
         self.transform = transform
-
         # dataset.json come from Karpathy neural talk repository and contain the restval split of coco
         with open(coco_json_file_path, 'r') as f:
             datas = json.load(f)
@@ -70,13 +65,22 @@ class CocoCaptionsRV(data.Dataset):
 
         self.content = [(os.path.join(y["filepath"], y["filename"]), [x["raw"] for x in y["sentences"]]) for y in self.content]
 
-        #path_params = os.path.join(word_dict_path, 'utable.npy')
-        #self.params = np.load(path_params, encoding='latin1')
-        if args.dict[-3:] == 'vec':
-            self.embed, self.id2word, self.word2id = _load_vec(args.dict)
+        self.word2id = None
+        self.bpe = False
+        if embed_type == 'bin':
+            self.embed = fastText.load_model('/data/m.portaz/wiki.en.bin')
+        elif embed_type == "multi":
+            self.embed = fastText.load_model('/data/m.portaz/wiki.multi.en.vec')
+        elif embed_type == "subword":
+            print("Loading subword model")
+            self.embed = BPEmb(lang="en", dim=embed_size)
+            self.bpe = True
         else:
-            self.embed = fastText.load_model(args.dict)
-            self.word2id = None
+            if embed_type[-3:] == 'vec':
+                self.embed, self.id2word, self.word2id = _load_vec(embed_type)
+            else:
+                self.embed = fastText.load_model(embed_type)
+                
         #self.dico = _load_dictionary(word_dict_path)
 
     def __getitem__(self, index, raw=False):
@@ -97,7 +101,10 @@ class CocoCaptionsRV(data.Dataset):
 
         #target = encode_sentence(target, self.params, self.dico)
         if self.word2id is None:
-            target = encode_sentence_fasttext(target, self.embed)
+            if self.bpe:
+                target = bpe_encode(target, self.embed)
+            else:
+                target = encode_sentence_fasttext(target, self.embed)
         else:
             target = encode_sentence(target, self.embed, self.word2id)
         return img, target
@@ -436,7 +443,7 @@ class TextDataset(data.Dataset):
 
 
 
-
+"""
 class VgCaptions(data.Dataset):
     def __init__(self, coco_root=path["COCO_ROOT"], vg_path_ann=path["VG_ANN"], path_vg_img=path["VG_IMAGE"], coco_json_file_path=path["COCO_RESTVAL_SPLIT"], word_dict_path=path["WORD_DICT"], image=True, transform=None):
         self.transform = transform
@@ -531,7 +538,7 @@ class CocoSemantic(data.Dataset):
     
     def __len__(self):
         return len(self.ids)
-
+"""
 
 def main(batch_size=32, workers=4 ):
     normalize = transforms.Normalize(
