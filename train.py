@@ -8,7 +8,6 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import numpy as np
 
-
 from dataset.dataset import CocoCaptionsRV, Shopping, Multi30k, DoubleDataset
 from utils.evaluation import eval_recall, k_recall
 from utils.loss import HardNegativeContrastiveLoss
@@ -18,15 +17,7 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import MultiStepLR
 import multiprocessing
-#import apex
-#from apex import amp
 
-os.environ["CHAINER_DTYPE"] = "float16"
-
-
-
-device = torch.device("cuda")
-# device = torch.device("cpu") # uncomment to run with cpu
 
 
 def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
@@ -38,10 +29,14 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
     model = model.train()
 
     end = time.time()
+    print("Start Training")
     for i, (imgs, caps, lengths) in enumerate(train_loader):
-        if i%2 == 1:
-                print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
+        print("%2.2f"% (i/len(train_loader)*100), '\%', end='\r')
+        
         input_imgs, input_caps = imgs.cuda(), caps.cuda()
+        
+        print("Imgs:", input_imgs.shape)
+        print("Caps:", input_caps.shape)
         
         if (input_imgs != input_imgs).any():
             print("NaN found in input_imgs")
@@ -137,7 +132,6 @@ def validate(val_loader, model, criterion, print_freq=1000):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description='Process some integers.')
 
     parser.add_argument("-n", '--name', required=True, help='Name of the model')
@@ -158,7 +152,7 @@ if __name__ == '__main__':
     parser.add_argument("-r", dest="resume", help="Resume training")
     parser.add_argument("-pt", dest="pretrained", help="Path to pretrained model", default="False")
     parser.add_argument("-la", dest="lang", help="Language used for the dataset", default="en")
-    parser.add_argument("--embed_type", default="multi", help="multi, align, bivec")
+    parser.add_argument("--embed_type", default="multi", help="multi, align, bivec, subword")
     
 
     args = parser.parse_args()
@@ -238,16 +232,16 @@ if __name__ == '__main__':
 
     if args.dataset == 'coco':
         print("Using coco dataset")
-        coco_data_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
-        coco_data_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
+        coco_data_train = CocoCaptionsRV(sset="trainrv", transform=prepro, embed_type=args.embed_type, embed_size=args.embed_size)
+        coco_data_val = CocoCaptionsRV(sset="val", transform=prepro_val, embed_type=args.embed_type, embed_size=args.embed_size)
     elif args.dataset == 'shopping':
         print("Using shopping dataset")
         if args.dataset_file == '':
-            coco_data_train = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt', sset="trainrv", transform=prepro)
-            coco_data_val = Shopping(args, '/data/shopping/', 'data/shoppingShort.txt',sset="val", transform=prepro_val)
+            coco_data_train = Shopping('/data/shopping/', 'data/shoppingShort.txt', sset="trainrv", transform=prepro, embed_type=args.embed_type, embed_size=args.embed_size)
+            coco_data_val = Shopping('/data/shopping/', 'data/shoppingShort.txt',sset="val", transform=prepro_val, embed_type=args.embed_type, embed_size=args.embed_size)
         else:
-            coco_data_train = Shopping(args, '/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
-            coco_data_val = Shopping(args, '/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
+            coco_data_train = Shopping('/data/shopping/', args.dataset_file, sset="trainrv", transform=prepro)
+            coco_data_val = Shopping('/data/shopping/', args.dataset_file,sset="val", transform=prepro_val)
     elif args.dataset == "multi30k":
         print("multi30k dataset in ", args.lang)
         coco_data_train = Multi30k(sset="train", lang=args.lang, transform=prepro, embed_type=args.embed_type)
@@ -256,9 +250,9 @@ if __name__ == '__main__':
     elif args.dataset == "double":
         print("Double dataset, coco + multi30k")
         print("multi30k dataset in ", args.lang)
-        d1_train = CocoCaptionsRV(args, sset="trainrv", transform=prepro)
+        d1_train = CocoCaptionsRV(sset="trainrv", transform=prepro, embed_type=args.embed_type, embed_size=args.embed_size)
         d2_train = Multi30k(sset="train", lang=args.lang, transform=prepro, embed_type=args.embed_type)
-        d1_val = CocoCaptionsRV(args, sset="val", transform=prepro_val)
+        d1_val = CocoCaptionsRV(sset="val", transform=prepro_val, embed_type=args.embed_type, embed_size=args.embed_size)
         d2_val = Multi30k(sset="val", lang=args.lang, transform=prepro_val, embed_type=args.embed_type)
         
         coco_data_train = DoubleDataset(d1_train, d2_train)
