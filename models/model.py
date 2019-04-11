@@ -58,10 +58,12 @@ class GruEmb(nn.Module):
 
 class img_embedding(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args=None):
         super(img_embedding, self).__init__()
-        
-        model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
+        if args is None:
+            model_weldon2 = ResNet_weldon(None, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
+        else:
+            model_weldon2 = ResNet_weldon(args, pretrained=True, weldon_pretrained_path=path["WELDON_CLASSIF_PRETRAINED"])
         self.base_layer = nn.Sequential(*list(model_weldon2.children())[:-1])
         for param in self.base_layer.parameters():
             param.requires_grad = False
@@ -81,17 +83,21 @@ class img_embedding(nn.Module):
 
 class joint_embedding(nn.Module):
 
-    def __init__(self, args):
+    def __init__(self, args=None):
         super(joint_embedding, self).__init__()
-
-        self.img_emb = img_embedding(args)
-        self.cap_emb = SruEmb(args.sru, args.embed_size, args.dimemb)
-        #self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
-        #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
-        
-        self.dropout = torch.nn.Dropout(p=0.5)
-        self.fc = nn.Linear(2400, args.dimemb, bias=True)
-        
+        if not args is None:
+            self.img_emb = img_embedding(args)
+            self.cap_emb = SruEmb(args.sru, args.embed_size, args.dimemb)
+            #self.cap_emb = SruEmb(args.sru, 300, args.dimemb)
+            #self.cap_emb = torch.nn.DataParallel(GruEmb(args.sru, 300, args.dimemb))
+            
+            self.dropout = torch.nn.Dropout(p=0.5)
+            self.fc = nn.Linear(2400, args.dimemb, bias=True)
+        else:
+            self.img_emb = img_embedding()
+            self.cap_emb = SruEmb(4, 300, 2400)
+            self.dropout = torch.nn.Dropout(p=0.5)
+            self.fc = nn.Linear(2400, 2400, bias=True)
 
     def forward(self, imgs, caps, lengths):
         if imgs is not None:
