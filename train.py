@@ -35,9 +35,6 @@ def train(train_loader, model, criterion, optimizer, epoch, print_freq=1000):
         
         input_imgs, input_caps = imgs.cuda(), caps.cuda()
         
-        print("Imgs:", input_imgs.shape)
-        print("Caps:", input_caps.shape)
-        
         if (input_imgs != input_imgs).any():
             print("NaN found in input_imgs")
             sys.exit(0)
@@ -102,7 +99,7 @@ def validate(val_loader, model, criterion, print_freq=1000):
     end = time.time()
     for i, (imgs, caps, lengths) in enumerate(val_loader):
 
-        input_imgs, input_caps = imgs.to(device, non_blocking=True), caps.to(device, non_blocking=True)
+        input_imgs, input_caps = imgs.cuda(), caps.cuda()
 
         # measure data loading time
         data_time.update(time.time() - end)
