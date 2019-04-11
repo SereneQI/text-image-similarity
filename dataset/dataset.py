@@ -70,7 +70,7 @@ class CocoCaptionsRV(data.Dataset):
         if embed_type == 'bin':
             self.embed = fastText.load_model('/data/m.portaz/wiki.en.bin')
         elif embed_type == "multi":
-            self.embed = fastText.load_model('/data/m.portaz/wiki.multi.en.vec')
+            self.embed, self.id2word, self.word2id = _load_vec('/data/m.portaz/wiki.multi.en.vec')
         elif embed_type == "subword":
             print("Loading subword model")
             self.embed = BPEmb(lang="en", dim=embed_size)
