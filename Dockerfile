@@ -1,9 +1,6 @@
 FROM nvcr.io/nvidia/cuda:10.0-cudnn7-devel-ubuntu18.04
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV http_proxy=http://10.100.9.1:2001 https_proxy=http://10.100.9.1:2001
-ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
-
 # Install some basic utilities
 RUN apt-get update && apt-get install -y \
     curl \
