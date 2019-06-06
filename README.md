@@ -6,9 +6,6 @@ Portaz et al. 2019
 
 This can be used to reproduce every experiments in the paper.
 
-
-This work is an extension of the paper [Finding beans in burgers: Deep semantic-visual embedding with localization](http://openaccess.thecvf.com/content_cvpr_2018/CameraReady/3272.pdf) with multilingual support.
-
 With Multi30K dataset, to learn English, French, German and Czech.
 
 ## Main dependencies
